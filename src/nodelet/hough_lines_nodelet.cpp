@@ -44,6 +44,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -64,8 +65,10 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  hough_lines::HoughLinesConfig config_;
-  dynamic_reconfigure::Server<hough_lines::HoughLinesConfig> srv;
+  typedef hough_lines::HoughLinesConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -81,7 +84,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
   double minLineLength_;
   double maxLineGap_;
 
-  void reconfigureCallback(hough_lines::HoughLinesConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_         = new_config;
     rho_            = config_.rho;
@@ -119,7 +122,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat in_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat in_image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
       cv::Mat src_gray;
 
       if (in_image.channels() > 1) {
@@ -167,7 +170,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
         cv::createTrackbar( thresh_label, window_name_, &threshold_, max_threshold_, trackbarCallback);
         if (need_config_update_) {
           config_.threshold = threshold_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -286,9 +289,10 @@ public:
     max_threshold_ = 150;
     threshold_ = max_threshold_;
 
-    dynamic_reconfigure::Server<hough_lines::HoughLinesConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&HoughLinesNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::LineArrayStamped>(*pnh_, "lines", 1);

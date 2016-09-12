@@ -41,6 +41,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -63,8 +64,10 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  watershed_segmentation::WatershedSegmentationConfig config_;
-  dynamic_reconfigure::Server<watershed_segmentation::WatershedSegmentationConfig> srv;
+  typedef watershed_segmentation::WatershedSegmentationConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -122,7 +125,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::ContourArrayStamped contours_msg;
@@ -143,7 +146,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
         cv::imshow( window_name_, frame);
         cv::setMouseCallback( window_name_, onMouse, 0 );
         if (need_config_update_) {
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
 
@@ -307,9 +310,10 @@ public:
     prevPt.x = -1;
     prevPt.y = -1;
 
-    dynamic_reconfigure::Server<watershed_segmentation::WatershedSegmentationConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&WatershedSegmentationNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     add_seed_points_sub_ = pnh_->subscribe("add_seed_points", 1, &WatershedSegmentationNodelet::add_seed_point_cb, this);
     img_pub_ = advertiseImage(*pnh_, "image", 1);
