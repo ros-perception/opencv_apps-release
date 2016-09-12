@@ -43,6 +43,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -62,8 +63,10 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  goodfeature_track::GoodfeatureTrackConfig config_;
-  dynamic_reconfigure::Server<goodfeature_track::GoodfeatureTrackConfig> srv;
+  typedef goodfeature_track::GoodfeatureTrackConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -73,7 +76,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
   int max_corners_;
 
-  void reconfigureCallback(goodfeature_track::GoodfeatureTrackConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     max_corners_ = config_.max_corners;
@@ -107,7 +110,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::Point2DArrayStamped corners_msg;
@@ -130,7 +133,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
         cv::createTrackbar( "Max corners", window_name_, &max_corners_, maxTrackbar, trackbarCallback);
         if (need_config_update_) {
           config_.max_corners = max_corners_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -223,9 +226,10 @@ public:
     window_name_ = "Image";
     max_corners_ = 23;
 
-    dynamic_reconfigure::Server<goodfeature_track::GoodfeatureTrackConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&GoodfeatureTrackNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::Point2DArrayStamped>(*pnh_, "corners", 1);

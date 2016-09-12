@@ -41,6 +41,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -63,8 +64,10 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  simple_flow::SimpleFlowConfig config_;
-  dynamic_reconfigure::Server<simple_flow::SimpleFlowConfig> srv;
+  typedef simple_flow::SimpleFlowConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   int subscriber_count_;
@@ -76,7 +79,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
   
   cv::Mat gray, prevGray;
 
-  void reconfigureCallback(simple_flow::SimpleFlowConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     scale_ = config_.scale;
@@ -110,7 +113,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame_src = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat frame_src = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       /// Convert it to gray
       cv::Mat frame;
@@ -144,7 +147,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
         cv::createTrackbar( "Scale", window_name_, &scale_, 24, trackbarCallback);
         if (need_config_update_) {
           config_.scale = scale_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -239,9 +242,10 @@ public:
     window_name_ = "simpleflow_demo";
     scale_ = 4.0;
 
-    dynamic_reconfigure::Server<simple_flow::SimpleFlowConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&SimpleFlowNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
