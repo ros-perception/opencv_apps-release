@@ -42,6 +42,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -61,8 +62,10 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  fback_flow::FBackFlowConfig config_;
-  dynamic_reconfigure::Server<fback_flow::FBackFlowConfig> srv;
+  typedef fback_flow::FBackFlowConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -72,7 +75,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
 
   cv::Mat prevgray, gray, flow, cflow;
 
-  void reconfigureCallback(fback_flow::FBackFlowConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -105,7 +108,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::FlowArrayStamped flows_msg;
@@ -114,7 +117,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
       if( debug_view_) {
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
         if (need_config_update_) {
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -205,9 +208,10 @@ public:
 
     window_name_ = "flow";
     
-    dynamic_reconfigure::Server<fback_flow::FBackFlowConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&FBackFlowNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
