@@ -1,3 +1,26 @@
+## opencv_apps (indigo) - 1.11.14-0
+
+The packages in the `opencv_apps` repository were released into the `indigo` distro by running `/usr/bin/bloom-release opencv_apps --track indigo --rosdistro indigo` on `Mon, 12 Sep 2016 12:56:47 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: https://github.com/ros-perception/opencv_apps-release.git
+- rosdistro version: `1.11.13-0`
+- old version: `1.11.13-0`
+- new version: `1.11.14-0`
+
+Versions of tools used:
+
+- bloom version: `0.5.22`
+- catkin_pkg version: `0.2.10`
+- rosdep version: `0.11.5`
+- rosdistro version: `0.4.7`
+- vcstools version: `0.1.39`
+
+
 ## opencv_apps (kinetic) - 1.11.13-0
 
 The packages in the `opencv_apps` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release opencv_apps -r kinetic -t kinetic` on `Thu, 09 Jun 2016 00:03:27 -0000`
