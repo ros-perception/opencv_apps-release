@@ -41,6 +41,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -65,8 +66,10 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  segment_objects::SegmentObjectsConfig config_;
-  dynamic_reconfigure::Server<segment_objects::SegmentObjectsConfig> srv;
+  typedef segment_objects::SegmentObjectsConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -81,7 +84,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
 #endif
   bool update_bg_model;
 
-  void reconfigureCallback(segment_objects::SegmentObjectsConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -114,7 +117,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::ContourArrayStamped contours_msg;
@@ -127,7 +130,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
         /// Create Trackbars for Thresholds
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
         if (need_config_update_) {
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -201,7 +204,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, out_frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(contours_msg);
       area_pub_.publish(area_msg);
@@ -257,9 +260,10 @@ public:
     bgsubtractor.set("noiseSigma", 10);
 #endif
 
-    dynamic_reconfigure::Server<segment_objects::SegmentObjectsConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&SegmentObjectsNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::ContourArrayStamped>(*pnh_, "contours", 1);
