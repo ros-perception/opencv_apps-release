@@ -40,7 +40,9 @@
 #include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
+#include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -64,8 +66,10 @@ class LKFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  lk_flow::LKFlowConfig config_;
-  dynamic_reconfigure::Server<lk_flow::LKFlowConfig> srv;
+  typedef lk_flow::LKFlowConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -81,7 +85,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   cv::Mat gray, prevGray;
   std::vector<cv::Point2f> points[2];
 
-  void reconfigureCallback(lk_flow::LKFlowConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -123,11 +127,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat image = cv_bridge::toCvShare(msg, msg->encoding)->image;
-      if (msg->encoding == sensor_msgs::image_encodings::RGB8 ||
-          msg->encoding == sensor_msgs::image_encodings::RGB16) {
-        cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
-      }
+      cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::FlowArrayStamped flows_msg;
@@ -138,7 +138,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
         //cv::setMouseCallback( window_name_, onMouse, 0 );
         if (need_config_update_) {
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -301,9 +301,10 @@ public:
     nightMode = false;
     addRemovePt = false;
 
-    dynamic_reconfigure::Server<lk_flow::LKFlowConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&LKFlowNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
