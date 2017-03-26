@@ -1,3 +1,26 @@
+## opencv_apps (jade) - 1.11.15-0
+
+The packages in the `opencv_apps` repository were released into the `jade` distro by running `/usr/bin/bloom-release opencv_apps --track jade --rosdistro jade` on `Sun, 26 Mar 2017 06:22:04 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: https://github.com/ros-perception/opencv_apps-release.git
+- rosdistro version: `1.11.14-0`
+- old version: `1.11.14-0`
+- new version: `1.11.15-0`
+
+Versions of tools used:
+
+- bloom version: `0.5.25`
+- catkin_pkg version: `0.3.1`
+- rosdep version: `0.11.5`
+- rosdistro version: `0.6.1`
+- vcstools version: `0.1.39`
+
+
 ## opencv_apps (indigo) - 1.11.15-0
 
 The packages in the `opencv_apps` repository were released into the `indigo` distro by running `/usr/bin/bloom-release opencv_apps --track indigo --rosdistro indigo` on `Sun, 26 Mar 2017 06:13:22 -0000`
