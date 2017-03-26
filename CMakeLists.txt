@@ -4,6 +4,7 @@ project(opencv_apps)
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp)
 
 find_package(OpenCV REQUIRED)
+message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
@@ -14,15 +15,25 @@ endif()
 if(cv_bridge_VERSION VERSION_LESS "1.11.9")
   add_definitions("-DCV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED")
 endif()
+# Supporting CvtColorForDisplay in cv_bridge has been started from 1.11.9 (2015-11-29)
+if(cv_bridge_VERSION VERSION_LESS "1.11.9")
+  add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_IS_NOT_SUPPORTED")
+endif()
+# Supporting CvtColorForDisplayOptions in cv_bridge has been started from 1.11.13 (2016-07-11)
+if(cv_bridge_VERSION VERSION_LESS "1.11.13")
+  add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED")
+endif()
 
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
+  cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
   cfg/GoodfeatureTrack.cfg
+  cfg/CornerHarris.cfg
   #
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
@@ -32,6 +43,9 @@ generate_dynamic_reconfigure_options(
   cfg/SegmentObjects.cfg
   cfg/SimpleFlow.cfg
   cfg/Threshold.cfg
+  cfg/RGBColorFilter.cfg
+  cfg/HLSColorFilter.cfg
+  cfg/HSVColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   )
 
@@ -113,7 +127,7 @@ endmacro()
 
 # core
 opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/adding_images_nodelet.cpp) # ./tutorial_code/core/AddingImages/AddingImages.cpp
-  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
+opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/discrete_fourier_transform src/nodelet/discrete_fourier_transform_nodelet.cpp)  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
   # ./tutorial_code/core/file_input_output/file_input_output.cpp
   # ./tutorial_code/core/how_to_scan_images/how_to_scan_images.cpp
   # ./tutorial_code/core/interoperability_with_OpenCV_1/interoperability_with_OpenCV_1.cpp
@@ -151,7 +165,9 @@ opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/ad
   # ./tutorial_code/ImgProc/Pyramids.cpp
 opencv_apps_add_nodelet(smoothing smoothing/smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
-  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(rgb_color_filter rgb_color_filter/rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hls_color_filter hls_color_filter/hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hsv_color_filter hsv_color_filter/hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 
 # ImgTrans
 opencv_apps_add_nodelet(edge_detection edge_detection/edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
@@ -196,7 +212,7 @@ opencv_apps_add_nodelet(contour_moments contour_moments/contour_moments src/node
 # TrackingMotion
 opencv_apps_add_nodelet(goodfeature_track goodfeature_track/goodfeature_track src/nodelet/goodfeature_track_nodelet.cpp) # ./tutorial_code/TrackingMotion/goodFeaturesToTrack_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerDetector_Demo.cpp
-  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
+opencv_apps_add_nodelet(corner_harris corner_harris/corner_harris src/nodelet/corner_harris_nodelet.cpp)  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerSubPix_Demo.cpp
 
 # videoio
