@@ -1,7 +1,10 @@
 <library path="lib/libopencv_apps">
-
   <class name="adding_images/adding_images" type="adding_images::AddingImagesNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to combine two images</description>
+  </class>
+
+  <class name="discrete_fourier_transform/discrete_fourier_transform" type="discrete_fourier_transform::DiscreteFourierTransformNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to fourier transform</description>
   </class>
 
   <class name="smoothing/smoothing" type="smoothing::SmoothingNodelet" base_class_type="nodelet::Nodelet">
@@ -44,6 +47,10 @@
     <description>Nodelet for detecting corners using Shi-Tomasi method</description>
   </class>
 
+  <class name="corner_harris/corner_harris" type="corner_harris::CornerHarrisNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for detecting corners using Harris method</description>
+  </class>
+
   <class name="camshift/camshift" type="camshift::CamShiftNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to show mean-shift based tracking</description>
   </class>
@@ -83,6 +90,18 @@
    <class name="threshold/threshold" type="threshold::ThresholdNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of threshold</description>
   </class>
+
+   <class name="rgb_color_filter/rgb_color_filter" type="color_filter::RGBColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of rgb color filter</description>
+   </class>
+
+   <class name="hls_color_filter/hls_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hls color filter</description>
+   </class>
+
+   <class name="hsv_color_filter/hsv_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hsv color filter</description>
+   </class>
 
   <class name="watershed_segmentation/watershed_segmentation" type="watershed_segmentation::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
