@@ -1,0 +1,13 @@
+Source: ros-jade-opencv-apps
+Section: misc
+Priority: extra
+Maintainer: Kei Okada <kei.okada@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-jade-catkin, ros-jade-compressed-image-transport, ros-jade-cv-bridge, ros-jade-dynamic-reconfigure, ros-jade-image-proc, ros-jade-image-transport, ros-jade-image-view, ros-jade-message-generation, ros-jade-nodelet, ros-jade-rosbag, ros-jade-roscpp, ros-jade-rosservice, ros-jade-rostest, ros-jade-rostopic, ros-jade-std-msgs, ros-jade-std-srvs, ros-jade-topic-tools
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jade-opencv-apps
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jade-cv-bridge, ros-jade-dynamic-reconfigure, ros-jade-image-transport, ros-jade-message-runtime, ros-jade-nodelet, ros-jade-roscpp, ros-jade-std-msgs, ros-jade-std-srvs
+Description: opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics.
+ With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want. You can have a look at all launch files provided here (be sure to choose the correct branch. As of Sept. 2016 indigo branch is used for ROS Indigo, Jade, and Kinetic distros). Some of the features covered by opencv_apps are explained in the wiki. The most of code is originally taken from https://github.com/Itseez/opencv/tree/master/samples/cpp
