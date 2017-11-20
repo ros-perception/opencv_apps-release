@@ -111,7 +111,7 @@ namespace filesystem {
   }
 }} // end of utility for resolving paths
 
-namespace face_recognition {
+namespace opencv_apps {
 
   class LabelMapper {
     std::map<std::string, int> m_;
@@ -234,7 +234,7 @@ namespace face_recognition {
 
   class FaceRecognitionNodelet: public opencv_apps::Nodelet
   {
-    typedef face_recognition::FaceRecognitionConfig Config;
+    typedef opencv_apps::FaceRecognitionConfig Config;
     typedef dynamic_reconfigure::Server<Config> Server;
     typedef message_filters::sync_policies::ExactTime<
       sensor_msgs::Image, opencv_apps::FaceArrayStamped> SyncPolicy;
@@ -463,16 +463,34 @@ namespace face_recognition {
       if (need_recreate_model) {
         try {
           if (config.model_method == "eigen") {
+// https://docs.opencv.org/3.3.1/da/d60/tutorial_face_main.html
+#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+            model_ = face::EigenFaceRecognizer::create(config.model_num_components,
+						       config.model_threshold);
+#else
             model_ = face::createEigenFaceRecognizer(config.model_num_components,
                                                    config.model_threshold);
+#endif
           } else if (config.model_method == "fisher") {
+#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+            model_ = face::FisherFaceRecognizer::create(config.model_num_components,
+							config.model_threshold);
+#else
             model_ = face::createFisherFaceRecognizer(config.model_num_components,
                                                     config.model_threshold);
+#endif
           } else if (config.model_method == "LBPH") {
+#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+            model_ = face::LBPHFaceRecognizer::create(config.lbph_radius,
+						      config.lbph_neighbors,
+						      config.lbph_grid_x,
+						      config.lbph_grid_y);
+#else
             model_ = face::createLBPHFaceRecognizer(config.lbph_radius,
                                                   config.lbph_neighbors,
                                                   config.lbph_grid_x,
                                                   config.lbph_grid_y);
+#endif
           }
           need_retrain = true;
         } catch (cv::Exception &e) {
@@ -553,7 +571,20 @@ namespace face_recognition {
       onInitPostProcess();
     }
   };
-}
+} // namespace opencv_apps
+
+namespace face_recognition {
+class FaceRecognitionNodelet : public opencv_apps::FaceRecognitionNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet face_recognition/face_recognition is deprecated, "
+             "and renamed to opencv_apps/face_recognition.");
+    opencv_apps::FaceRecognitionNodelet::onInit();
+  }
+};
+} // namespace face_recognition
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceRecognitionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(face_recognition::FaceRecognitionNodelet, nodelet::Nodelet);
