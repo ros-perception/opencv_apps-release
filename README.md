@@ -1,3 +1,26 @@
+## opencv_apps (melodic) - 2.0.0-0
+
+The packages in the `opencv_apps` repository were released into the `melodic` distro by running `/usr/bin/bloom-release opencv_apps --track melodic --rosdistro melodic` on `Sun, 22 Jul 2018 06:14:40 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `2.0.0-0`
+
+Versions of tools used:
+
+- bloom version: `0.6.6`
+- catkin_pkg version: `0.4.6`
+- rosdep version: `0.12.2`
+- rosdistro version: `0.6.8`
+- vcstools version: `0.1.40`
+
+
 ## opencv_apps (lunar) - 2.0.0-0
 
 The packages in the `opencv_apps` repository were released into the `lunar` distro by running `/usr/bin/bloom-release opencv_apps --track lunar --rosdistro lunar` on `Sun, 22 Jul 2018 06:05:36 -0000`
