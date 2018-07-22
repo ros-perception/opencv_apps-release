@@ -1,0 +1,13 @@
+Source: ros-lunar-opencv-apps
+Section: misc
+Priority: extra
+Maintainer: Kei Okada <kei.okada@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-lunar-catkin, ros-lunar-compressed-image-transport, ros-lunar-cv-bridge, ros-lunar-dynamic-reconfigure, ros-lunar-image-proc, ros-lunar-image-transport, ros-lunar-image-view, ros-lunar-message-generation, ros-lunar-nodelet, ros-lunar-rosbag, ros-lunar-roscpp, ros-lunar-rosservice, ros-lunar-rostest, ros-lunar-rostopic, ros-lunar-std-msgs, ros-lunar-std-srvs, ros-lunar-topic-tools
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-lunar-opencv-apps
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-lunar-cv-bridge, ros-lunar-dynamic-reconfigure, ros-lunar-image-transport, ros-lunar-message-runtime, ros-lunar-nodelet, ros-lunar-roscpp, ros-lunar-std-msgs, ros-lunar-std-srvs
+Description: opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics.
+ With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want. You can have a look at all launch files provided here (be sure to choose the correct branch. As of Sept. 2016 indigo branch is used for ROS Indigo, Jade, and Kinetic distros). Some of the features covered by opencv_apps are explained in the wiki. The most of code is originally taken from https://github.com/Itseez/opencv/tree/master/samples/cpp
