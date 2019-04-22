@@ -1,3 +1,26 @@
+## opencv_apps (lunar) - 2.0.1-1
+
+The packages in the `opencv_apps` repository were released into the `lunar` distro by running `/usr/bin/bloom-release -y opencv_apps --track lunar --rosdistro lunar` on `Mon, 22 Apr 2019 08:36:04 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: https://github.com/ros-perception/opencv_apps-release.git
+- rosdistro version: `2.0.0-0`
+- old version: `2.0.0-0`
+- new version: `2.0.1-1`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.11`
+- rosdep version: `0.15.1`
+- rosdistro version: `0.7.3`
+- vcstools version: `0.1.40`
+
+
 ## opencv_apps (kinetic) - 2.0.1-1
 
 The packages in the `opencv_apps` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release -y opencv_apps --track kinetic --rosdistro kinetic` on `Mon, 22 Apr 2019 08:33:30 -0000`
