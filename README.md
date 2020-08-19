@@ -1,3 +1,26 @@
+## opencv_apps (noetic) - 2.0.2-1
+
+The packages in the `opencv_apps` repository were released into the `noetic` distro by running `/usr/bin/bloom-release -y opencv_apps --track noetic --rosdistro noetic` on `Wed, 19 Aug 2020 09:29:39 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `2.0.2-1`
+
+Versions of tools used:
+
+- bloom version: `0.9.3`
+- catkin_pkg version: `0.4.16`
+- rosdep version: `0.19.0`
+- rosdistro version: `0.8.0`
+- vcstools version: `0.1.42`
+
+
 ## opencv_apps (melodic) - 2.0.1-1
 
 The packages in the `opencv_apps` repository were released into the `melodic` distro by running `/usr/bin/bloom-release -y opencv_apps --track melodic --rosdistro melodic` on `Mon, 22 Apr 2019 08:38:43 -0000`
