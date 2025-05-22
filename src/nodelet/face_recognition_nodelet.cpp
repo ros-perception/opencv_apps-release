@@ -89,6 +89,7 @@ namespace filesystem3
 namespace filesystem
 {
 #endif
+#if BOOST_VERSION < 108300
 template <>
 path& path::append<typename path::iterator>(typename path::iterator lhs, typename path::iterator rhs,
                                             const codecvt_type& cvt)
@@ -97,9 +98,18 @@ path& path::append<typename path::iterator>(typename path::iterator lhs, typenam
     *this /= *lhs;
   return *this;
 }
+#endif
 path user_expanded_path(const path& p)
 {
+#if BOOST_VERSION < 108300
   path::const_iterator it(p.begin());
+#else
+  if (p.size() < 2)
+    return p;
+
+  auto it = p.begin();
+  // Replace the tilda with the home directory
+#endif
   std::string user_dir = (*it).string();
   if (user_dir.length() == 0 || user_dir[0] != '~')
     return p;
@@ -121,8 +131,19 @@ path user_expanded_path(const path& p)
       return p;
     homedir = pw->pw_dir;
   }
+
+  // Append the rest of path
   ret = path(std::string(homedir));
+#if BOOST_VERSION < 108300
   return ret.append(++it, p.end(), path::codecvt());
+#else
+  ++it;
+  for (; it != p.end(); ++it)
+  {
+    ret /= *it;
+  }
+  return ret;
+#endif
 }
 }  // namespace filesystem
 }  // namespace boost
@@ -409,8 +430,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     model_->predict(resized_img, label, confidence);
   }
 
-  void faceImageCallback(const sensor_msgs::Image::ConstPtr& image,
-                         const opencv_apps::FaceArrayStamped::ConstPtr& faces)
+  void faceImageCallback(const sensor_msgs::Image::ConstPtr& image, const opencv_apps::FaceArrayStamped::ConstPtr& faces)
   {
     NODELET_DEBUG("faceImageCallback");
     boost::mutex::scoped_lock lock(mutex_);
@@ -631,13 +651,15 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     {
       async_ = boost::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(queue_size_);
       async_->connectInput(img_sub_, face_sub_);
-      async_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, _1, _2));
+      async_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
+                                           boost::placeholders::_2));
     }
     else
     {
       sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
       sync_->connectInput(img_sub_, face_sub_);
-      sync_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, _1, _2));
+      sync_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
+                                          boost::placeholders::_2));
     }
   }
 
@@ -649,6 +671,12 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   }
 
 public:
+  ~FaceRecognitionNodelet()  // NOLINT(modernize-use-override)
+  {
+    sync_.reset();
+    async_.reset();
+  }
+
   virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
@@ -658,7 +686,8 @@ public:
 
     // dynamic reconfigures
     cfg_srv_ = boost::make_shared<Server>(*pnh_);
-    Server::CallbackType f = boost::bind(&FaceRecognitionNodelet::configCallback, this, _1, _2);
+    Server::CallbackType f =
+        boost::bind(&FaceRecognitionNodelet::configCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     cfg_srv_->setCallback(f);
 
     // parameters
@@ -690,6 +719,10 @@ public:
 };
 }  // namespace face_recognition
 
+#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
 #include <pluginlib/class_list_macros.h>
+#else
+#include <pluginlib/class_list_macros.hpp>
+#endif
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceRecognitionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(face_recognition::FaceRecognitionNodelet, nodelet::Nodelet);

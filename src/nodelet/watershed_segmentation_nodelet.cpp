@@ -330,8 +330,8 @@ public:
     prevPt.y = -1;
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&WatershedSegmentationNodelet::reconfigureCallback, this, _1, _2);
+    dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(
+        &WatershedSegmentationNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     add_seed_points_sub_ = pnh_->subscribe("add_seed_points", 1, &WatershedSegmentationNodelet::addSeedPointCb, this);
@@ -371,6 +371,10 @@ public:
 };
 }  // namespace watershed_segmentation
 
+#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
 #include <pluginlib/class_list_macros.h>
+#else
+#include <pluginlib/class_list_macros.hpp>
+#endif
 PLUGINLIB_EXPORT_CLASS(opencv_apps::WatershedSegmentationNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(watershed_segmentation::WatershedSegmentationNodelet, nodelet::Nodelet);
