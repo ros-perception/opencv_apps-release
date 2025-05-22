@@ -195,8 +195,8 @@ class LKFlowNodelet : public opencv_apps::Nodelet
         if (prevGray.empty())
           gray.copyTo(prevGray);
         cv::calcOpticalFlowPyrLK(prevGray, gray, points[0], points[1], status, err, win_size, 3, termcrit, 0, 0.001);
-        size_t i, k;
-        for (i = k = 0; i < points[1].size(); i++)
+        size_t i;
+        for (i = 0; i < points[1].size(); i++)
         {
           if (addRemovePt)
           {
@@ -207,25 +207,23 @@ class LKFlowNodelet : public opencv_apps::Nodelet
             }
           }
 
-          if (!status[i])
-            continue;
-
-          points[1][k++] = points[1][i];
-          cv::circle(image, points[1][i], 3, cv::Scalar(0, 255, 0), -1, 8);
-          cv::line(image, points[1][i], points[0][i], cv::Scalar(0, 255, 0), 1, 8, 0);
-
           opencv_apps::Flow flow_msg;
           opencv_apps::Point2D point_msg;
           opencv_apps::Point2D velocity_msg;
-          point_msg.x = points[1][i].x;
-          point_msg.y = points[1][i].y;
-          velocity_msg.x = points[1][i].x - points[0][i].x;
-          velocity_msg.y = points[1][i].y - points[0][i].y;
+          if (status[i])
+          {
+            cv::circle(image, points[1][i], 3, cv::Scalar(0, 255, 0), -1, 8);
+            cv::line(image, points[1][i], points[0][i], cv::Scalar(0, 255, 0), 1, 8, 0);
+            point_msg.x = points[1][i].x;
+            point_msg.y = points[1][i].y;
+            velocity_msg.x = points[1][i].x - points[0][i].x;
+            velocity_msg.y = points[1][i].y - points[0][i].y;
+          }
           flow_msg.point = point_msg;
           flow_msg.velocity = velocity_msg;
+          flows_msg.status.push_back(status[i]);
           flows_msg.flow.push_back(flow_msg);
         }
-        points[1].resize(k);
       }
 
       if (addRemovePt && points[1].size() < (size_t)MAX_COUNT)
@@ -263,7 +261,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       cv::swap(prevGray, gray);
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding, image).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", image).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(flows_msg);
     }
@@ -332,7 +330,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&LKFlowNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&LKFlowNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -368,6 +366,10 @@ public:
 };
 }  // namespace lk_flow
 
+#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
 #include <pluginlib/class_list_macros.h>
+#else
+#include <pluginlib/class_list_macros.hpp>
+#endif
 PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(lk_flow::LKFlowNodelet, nodelet::Nodelet);
