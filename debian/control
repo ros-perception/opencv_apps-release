@@ -1,0 +1,13 @@
+Source: ros-lyrical-opencv-apps
+Section: misc
+Priority: optional
+Maintainer: "Kei Okada" <kei.okada@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), curl, g++, libcurl4-openssl-dev, python3-numpy <!nocheck>, python3-opencv <!nocheck>, ros-lyrical-ament-cmake, ros-lyrical-ament-index-python <!nocheck>, ros-lyrical-class-loader, ros-lyrical-compressed-image-transport <!nocheck>, ros-lyrical-cv-bridge, ros-lyrical-geometry-msgs, ros-lyrical-image-proc <!nocheck>, ros-lyrical-image-publisher <!nocheck>, ros-lyrical-image-transport, ros-lyrical-launch-ros <!nocheck>, ros-lyrical-launch-testing-ament-cmake <!nocheck>, ros-lyrical-message-filters, ros-lyrical-rclcpp, ros-lyrical-rclcpp-components, ros-lyrical-ros-environment, ros-lyrical-rosidl-default-generators, ros-lyrical-rosidl-runtime-py <!nocheck>, ros-lyrical-sensor-msgs, ros-lyrical-std-msgs, ros-lyrical-std-srvs, ros-lyrical-topic-tools <!nocheck>, ros-lyrical-ros-workspace, ros-lyrical-rosidl-typesupport-fastrtps-c, ros-lyrical-rosidl-typesupport-fastrtps-cpp
+Homepage: https://ros-perception.github.io/opencv_apps/
+Standards-Version: 3.9.2
+
+Package: ros-lyrical-opencv-apps
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, curl, libcurl4-openssl-dev, ros-lyrical-class-loader, ros-lyrical-cv-bridge, ros-lyrical-geometry-msgs, ros-lyrical-image-transport, ros-lyrical-image-view, ros-lyrical-message-filters, ros-lyrical-rclcpp, ros-lyrical-rclcpp-components, ros-lyrical-rosidl-default-runtime, ros-lyrical-sensor-msgs, ros-lyrical-std-msgs, ros-lyrical-std-srvs, ros-lyrical-ros-workspace
+Description: opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics.
+ With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want. You can have a look at all launch files provided here (be sure to choose the correct branch. As of Sept. 2016 indigo branch is used for ROS Indigo, Jade, and Kinetic distros). The nodes are documented in the documentation (and the wiki for ROS 1). The most of code is originally taken from https://github.com/Itseez/opencv/tree/master/samples/cpp
