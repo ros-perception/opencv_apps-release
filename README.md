@@ -1,3 +1,26 @@
+## opencv_apps (rolling) - 3.0.0-1
+
+The packages in the `opencv_apps` repository were released into the `rolling` distro by running `/usr/bin/bloom-release --rosdistro rolling --track rolling --new-track --no-pull-request --override-release-repository-url https://github.com/ros-perception/opencv_apps-release.git opencv_apps` on `Sat, 14 Nov 2026 03:11:15 -0000`
+
+The `opencv_apps` package was released.
+
+Version of package(s) in repository `opencv_apps`:
+
+- upstream repository: https://github.com/ros-perception/opencv_apps.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `3.0.0-1`
+
+Versions of tools used:
+
+- bloom version: `0.14.4`
+- catkin_pkg version: `1.1.1`
+- rosdep version: `0.27.0`
+- rosdistro version: `1.1.0`
+- vcstools version: `0.1.42`
+
+
 ## opencv_apps (lyrical) - 3.0.0-1
 
 The packages in the `opencv_apps` repository were released into the `lyrical` distro by running `/usr/bin/bloom-release --rosdistro lyrical --track lyrical --new-track --override-release-repository-url https://github.com/ros-perception/opencv_apps-release.git opencv_apps` on `Sat, 14 Nov 2026 03:10:07 -0000`
