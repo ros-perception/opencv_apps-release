@@ -38,7 +38,7 @@ rosdep update
     else
         sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
     fi
-    wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+    wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
     # Setup EoL repository
     if [[ "$ROS_DISTRO" ==  "hydro" || "$ROS_DISTRO" ==  "jade" || "$ROS_DISTRO" ==  "lunar" ]]; then
         sudo -E sh -c 'echo "deb http://snapshots.ros.org/$ROS_DISTRO/final/ubuntu `lsb_release -sc` main" >> /etc/apt/sources.list.d/ros-latest.list'
@@ -177,7 +177,8 @@ if [ "$TEST" == "catkin_lint" ]; then
     rosdep init
     rosdep update --include-eol-distros
     travis_time_end
-    ROS_DISTRO=melodic catkin_lint --resolve-env --strict $CI_SOURCE_PATH
+    # ROS_VERSION for the $ROS_VERSION conditions in package.xml
+    ROS_DISTRO=melodic ROS_VERSION=1 catkin_lint --resolve-env --strict $CI_SOURCE_PATH
 
 
 elif [ "$TEST" == "clang-format" ]; then

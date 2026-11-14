@@ -31,6 +31,10 @@
     <description>Nodelet to find circles</description>
   </class>
 
+  <class name="opencv_apps/blob_detection" type="opencv_apps::BlobDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect blobs using the SimpleBlobDetector</description>
+  </class>
+
   <class name="opencv_apps/find_contours" type="opencv_apps::FindContoursNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to find contours</description>
   </class>
@@ -63,6 +67,10 @@
     <description>Nodelet for detecting corners using Harris method</description>
   </class>
 
+  <class name="opencv_apps/background_subtraction" type="opencv_apps::BackgroundSubtractionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to segment the foreground from the background with background subtraction methods</description>
+  </class>
+
   <class name="opencv_apps/camshift" type="opencv_apps::CamShiftNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to show mean-shift based tracking</description>
   </class>
@@ -73,6 +81,10 @@
 
   <class name="opencv_apps/lk_flow" type="opencv_apps::LKFlowNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to calculate Lukas-Kanade optical flow</description>
+  </class>
+
+  <class name="opencv_apps/line_segment_detector" type="opencv_apps::LineSegmentDetectorNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect line segments using the LineSegmentDetector</description>
   </class>
 
   <class name="opencv_apps/people_detect" type="opencv_apps::PeopleDetectNodelet" base_class_type="nodelet::Nodelet">
@@ -123,8 +135,76 @@
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
+  <class name="opencv_apps/compare_histogram" type="opencv_apps::CompareHistogramNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to compute the histogram of an image and compare it with a reference histogram: calcHist(), compareHist()</description>
+  </class>
+
   <class name="opencv_apps/equalize_histogram" type="opencv_apps::EqualizeHistogramNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet for histogram equalization</description>
+  </class>
+
+  <class name="opencv_apps/dnn_face_detection" type="opencv_apps::DNNFaceDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect faces with YuNet (cv::FaceDetectorYN)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_face_recognition" type="opencv_apps::DNNFaceRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to recognize faces with YuNet and SFace (cv::FaceRecognizerSF)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_object_detection" type="opencv_apps::DNNObjectDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO</description>
+  </class>
+
+  <class name="opencv_apps/tracking" type="opencv_apps::TrackingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to track the target with OpenCV trackers</description>
+  </class>
+
+  <class name="opencv_apps/dnn_tracking" type="opencv_apps::DNNTrackingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to track the target with the DNN based trackers of OpenCV (DaSiamRPN, NanoTrack, VitTrack)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_facial_expression_recognition" type="opencv_apps::DNNFacialExpressionRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to recognize the facial expressions with YuNet and MobileFaceNet</description>
+  </class>
+
+  <class name="opencv_apps/dnn_image_classification" type="opencv_apps::DNNImageClassificationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to classify the images with a DNN model, e.g. PP-ResNet50 (ImageNet)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_depth_estimation" type="opencv_apps::DNNDepthEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of monocular depth estimation with a DNN model, e.g. MiDaS</description>
+  </class>
+
+  <class name="opencv_apps/dnn_pose_estimation" type="opencv_apps::DNNPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the human poses with MediaPipe person detection and pose estimation</description>
+  </class>
+
+  <class name="opencv_apps/dnn_hand_pose_estimation" type="opencv_apps::DNNHandPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the hand poses with MediaPipe palm detection and hand pose estimation</description>
+  </class>
+
+  <class name="opencv_apps/dnn_semantic_segmentation" type="opencv_apps::DNNSemanticSegmentationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
+  </class>
+
+  <class name="opencv_apps/dnn_text_detection" type="opencv_apps::DNNTextDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)</description>
+  </class>
+
+  <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
+  </class>
+
+  <class name="opencv_apps/barcode_detection" type="opencv_apps::BarcodeDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and decode barcodes (cv::barcode::BarcodeDetector)</description>
+  </class>
+
+  <class name="opencv_apps/aruco_detection" type="opencv_apps::ArucoDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect ArUco markers, and their poses with the camera info (cv::aruco)</description>
+  </class>
+
+  <class name="opencv_apps/match_template" type="opencv_apps::MatchTemplateNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to find a template image in the image: matchTemplate()</description>
   </class>
 
   <!--
