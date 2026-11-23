@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>opencv_apps</name>
-  <version>3.0.0</version>
+  <version>3.1.0</version>
   <description>
     <p>opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics. With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want.</p>
     <ul>
@@ -40,6 +40,10 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>vision_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
   <build_depend>class_loader</build_depend>
 
   <!-- run_depend before format 3: CATKIN_DEPENDS of catkin_package(), and the msgs used in the generated headers -->
@@ -67,6 +71,10 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>vision_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>class_loader</exec_depend>
 
   <test_depend condition="$ROS_VERSION==1">roslaunch</test_depend>
@@ -81,6 +89,7 @@
   <test_depend condition="$ROS_VERSION==2">python3-numpy</test_depend>
   <test_depend condition="$ROS_VERSION==2">python3-opencv</test_depend>
   <test_depend condition="$ROS_VERSION==2">rosidl_runtime_py</test_depend>
+  <test_depend condition="$ROS_VERSION==2">tf2_msgs</test_depend>
   <test_depend>image_proc</test_depend>
   <test_depend>topic_tools</test_depend>
   <test_depend>compressed_image_transport</test_depend>
