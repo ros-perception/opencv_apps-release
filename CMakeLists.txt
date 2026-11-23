@@ -159,6 +159,19 @@ set(_nodelet_cppfiles
   src/nodelet/simple_compressed_example_nodelet.cpp
   src/nodelet/background_subtraction_nodelet.cpp
 )
+# cv::CascadeClassifier (face_detection) and cv::HOGDescriptor (people_detect) are in the xobjdetect module of
+# opencv_contrib since OpenCV 5
+if(NOT OpenCV_VERSION VERSION_LESS "5.0" AND NOT TARGET opencv_xobjdetect)
+  list(REMOVE_ITEM _nodelets face_detection:FaceDetectionNodelet people_detect:PeopleDetectNodelet)
+  list(REMOVE_ITEM _nodelet_cppfiles src/nodelet/face_detection_nodelet.cpp src/nodelet/people_detect_nodelet.cpp)
+  set(OPENCV_APPS_NO_XOBJDETECT TRUE)
+endif()
+# face_recognition needs the face module of opencv_contrib, which needs xobjdetect since OpenCV 5
+if(NOT TARGET opencv_face)
+  list(REMOVE_ITEM _nodelets face_recognition:FaceRecognitionNodelet)
+  list(REMOVE_ITEM _nodelet_cppfiles src/nodelet/face_recognition_nodelet.cpp)
+  set(OPENCV_APPS_NO_FACE TRUE)
+endif()
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
 if(OPENCV_HAVE_OPTFLOW)
   list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
@@ -180,7 +193,13 @@ if(OPENCV_HAVE_DNN)
     dnn_pose_estimation:DNNPoseEstimationNodelet
     dnn_hand_pose_estimation:DNNHandPoseEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
+    dnn_interactive_segmentation:DNNInteractiveSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
+    dnn_super_resolution:DNNSuperResolutionNodelet
+    dnn_optical_flow:DNNOpticalFlowNodelet
+    dnn_person_reid:DNNPersonReIDNodelet
+    dnn_inpainting:DNNInpaintingNodelet
+    dnn_edge_detection:DNNEdgeDetectionNodelet
     qrcode_detection:QRCodeDetectionNodelet
   )
   list(APPEND _nodelet_cppfiles
@@ -195,7 +214,13 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_pose_estimation_nodelet.cpp
     src/nodelet/dnn_hand_pose_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
+    src/nodelet/dnn_interactive_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
+    src/nodelet/dnn_super_resolution_nodelet.cpp
+    src/nodelet/dnn_optical_flow_nodelet.cpp
+    src/nodelet/dnn_person_reid_nodelet.cpp
+    src/nodelet/dnn_inpainting_nodelet.cpp
+    src/nodelet/dnn_edge_detection_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
   )
   if(OPENCV_HAVE_BARCODE)
@@ -220,6 +245,23 @@ if(OpenCV_VERSION VERSION_GREATER_EQUAL "4.5.1")
   if(TARGET opencv_tracking)
     set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
   endif()
+endif()
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(vision_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+list(APPEND _nodelets detection_3d:Detection3DNodelet)
+list(APPEND _nodelet_cppfiles src/nodelet/detection_3d_nodelet.cpp)
+# the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib
+find_package(nav_msgs REQUIRED)
+list(APPEND _nodelets laser_odometry:LaserOdometryNodelet)
+list(APPEND _nodelet_cppfiles src/nodelet/laser_odometry_nodelet.cpp)
+# cv::rgbd::RgbdOdometry of opencv_contrib is cv::Odometry of the 3d module in OpenCV 5
+if(TARGET opencv_rgbd AND OpenCV_VERSION VERSION_LESS "5.0")
+  set(OPENCV_HAVE_RGBD TRUE)
+  list(APPEND _nodelets rgbd_odometry:RGBDOdometryNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/rgbd_odometry_nodelet.cpp)
 endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
@@ -248,6 +290,8 @@ if(OPENCV_HAVE_DNN)
     target_link_libraries(${PROJECT_NAME}_nodelet CURL::libcurl)
   endif()
 endif()
+target_link_libraries(${PROJECT_NAME}_nodelet ${geometry_msgs_TARGETS} tf2_ros::tf2_ros ${vision_msgs_TARGETS}
+  ${visualization_msgs_TARGETS} ${nav_msgs_TARGETS})
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -266,9 +310,18 @@ install(TARGETS ${PROJECT_NAME}_nodelet
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.launch.xml"
+  FILES_MATCHING PATTERN "*.launch.xml" PATTERN "*.launch.py"
 )
+# the configs of rviz2 of detection_3d and the odometry
+install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz rviz/detection_3d_skeletons.rviz
+  rviz/laser_odometry.rviz
+  rviz/laser_odometry_slam.rviz rviz/rgbd_odometry.rviz rviz/odometry_tb3_simulation.rviz
+  rviz/odometry_tb3_simulation_3d.rviz DESTINATION share/${PROJECT_NAME}/rviz)
+# the parameters of slam_toolbox and the bridge of Gazebo of the examples of the odometry
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
+# the wrapper of use_cuda of the launch files of the dnn nodes, to run them in the docker image of CUDA
+install(PROGRAMS scripts/run_in_docker DESTINATION lib/${PROJECT_NAME})
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/${_script})
@@ -283,18 +336,46 @@ if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
   # test/ros2/test_*.py: ROS2 versions of test/test-*.test, plus test_nodes.py; they import test/ros2/opencv_apps_test.py
   file(GLOB _launch_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/ros2/test_*.py)
+  # face_recognition needs the face module, and face_detection and people_detect (and face_recognition, whose test
+  # launches face_detection) need xobjdetect
+  if(OPENCV_APPS_NO_FACE)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_face_recognition.py)
+  endif()
+  if(OPENCV_APPS_NO_XOBJDETECT)
+    set(_have_xobjdetect 0)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_face_detection.py test/ros2/test_people_detect.py
+      test/ros2/test_face_recognition.py)
+  else()
+    set(_have_xobjdetect 1)
+  endif()
   if(OPENCV_HAVE_OPTFLOW)
     set(_have_optflow 1)
   else()
     set(_have_optflow 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
   endif()
+  # rgbd_odometry needs the rgbd module of opencv_contrib
+  if(NOT OPENCV_HAVE_RGBD)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_rgbd_odometry.py)
+  endif()
   # the tests of the dnn nodes download the models by libcurl
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
-      test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_text_detection.py
+      test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_object_detection_nanodet.py
+      test/ros2/test_dnn_object_detection_yolov8.py
+      test/ros2/test_dnn_text_detection.py
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
       test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
+  endif()
+  # the test of detection_3d detects the people with dnn_object_detection
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py
+      test/ros2/test_detection_3d_distortion.py test/ros2/test_detection_3d_launch.py
+      test/ros2/test_detection_3d_warnings.py)
+  endif()
+  # the test of dnn_person_reid re-identifies the people detected by dnn_object_detection
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_person_reid.py test/ros2/test_dnn_person_reid_delay.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
@@ -305,10 +386,40 @@ if(BUILD_TESTING)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_tracking.py test/ros2/test_dnn_tracking_nanotrack.py
       test/ros2/test_dnn_tracking_walk.py)
   endif()
+  # YOLOv8 (onnx) needs OpenCV 4.9 or later
+  if(OpenCV_VERSION VERSION_LESS "4.9")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_object_detection_yolov8.py)
+  endif()
   # the MediaPipe models of dnn_pose_estimation and dnn_hand_pose_estimation need OpenCV 4.9 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
-      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py)
+      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
+      test/ros2/test_detection_3d_skeletons.py test/ros2/test_detection_3d_launch_skeletons.py)
+  endif()
+  # LaMa of dnn_inpainting needs OpenCV 5.0 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "5.0")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_inpainting.py)
+  endif()
+  # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py
+      test/ros2/test_detection_3d_launch_depth_estimation.py)
+  endif()
+  # the onnx models of dnn_superres (DepthToSpace) of dnn_super_resolution need OpenCV 4.12 or later (4.10 fails on them)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.12")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_super_resolution.py)
+  endif()
+  # RAFT of dnn_optical_flow needs OpenCV 4.10 or later (OpenCV 4.6 cannot read it)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_optical_flow.py)
+  endif()
+  # EfficientSAM (onnx of a vision transformer, e.g. LayerNormalization) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_interactive_segmentation.py)
+  endif()
+  # DexiNed of dnn_edge_detection (onnx with DequantizeLinear) needs OpenCV 4.12 or later (4.10 fails on it)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.12")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_edge_detection.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -336,7 +447,7 @@ if(BUILD_TESTING)
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
       ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow} OPENCV_APPS_HAVE_LSD=${_have_lsd}
-          OPENCV_APPS_HAVE_TRACKING=${_have_tracking}
+          OPENCV_APPS_HAVE_XOBJDETECT=${_have_xobjdetect} OPENCV_APPS_HAVE_TRACKING=${_have_tracking}
       APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
     # they use the same ROS domain and topic names (e.g. /image)
     set_tests_properties(${_name} PROPERTIES RUN_SERIAL TRUE)
@@ -808,7 +919,13 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_pose_estimation src/nodelet/dnn_pose_estimation_nodelet.cpp) # opencv_zoo pose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_hand_pose_estimation src/nodelet/dnn_hand_pose_estimation_nodelet.cpp) # opencv_zoo handpose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
+  opencv_apps_add_nodelet(dnn_interactive_segmentation src/nodelet/dnn_interactive_segmentation_nodelet.cpp) # opencv_zoo image_segmentation_efficientsam
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
+  opencv_apps_add_nodelet(dnn_super_resolution src/nodelet/dnn_super_resolution_nodelet.cpp) # opencv_contrib dnn_superres
+  opencv_apps_add_nodelet(dnn_optical_flow src/nodelet/dnn_optical_flow_nodelet.cpp) # opencv_zoo optical_flow_estimation_raft
+  opencv_apps_add_nodelet(dnn_person_reid src/nodelet/dnn_person_reid_nodelet.cpp) # ./dnn/person_reid.py
+  opencv_apps_add_nodelet(dnn_inpainting src/nodelet/dnn_inpainting_nodelet.cpp) # opencv_zoo inpainting_lama, ./dnn/inpainting.cpp of OpenCV 5
+  opencv_apps_add_nodelet(dnn_edge_detection src/nodelet/dnn_edge_detection_nodelet.cpp) # ./dnn/edge_detection.cpp (5.x)
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
   if(OPENCV_HAVE_BARCODE)
     opencv_apps_add_nodelet(barcode_detection src/nodelet/barcode_detection_nodelet.cpp) # ./cpp/barcode.cpp
@@ -825,12 +942,44 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
 
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image; tf2_ros and
+# vision_msgs are found here, not in the components of catkin above, and the node is skipped without them
+find_package(tf2_ros QUIET)
+find_package(vision_msgs QUIET)
+find_package(visualization_msgs QUIET)
+if(tf2_ros_FOUND AND vision_msgs_FOUND AND visualization_msgs_FOUND)
+  include_directories(${tf2_ros_INCLUDE_DIRS} ${vision_msgs_INCLUDE_DIRS} ${visualization_msgs_INCLUDE_DIRS})
+  opencv_apps_add_nodelet(detection_3d src/nodelet/detection_3d_nodelet.cpp)
+  set(OPENCV_APPS_HAVE_DETECTION_3D TRUE)
+endif()
+# the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib, with tf2_ros and nav_msgs
+find_package(nav_msgs QUIET)
+if(tf2_ros_FOUND AND nav_msgs_FOUND)
+  include_directories(${tf2_ros_INCLUDE_DIRS} ${nav_msgs_INCLUDE_DIRS})
+  opencv_apps_add_nodelet(laser_odometry src/nodelet/laser_odometry_nodelet.cpp)
+  set(OPENCV_APPS_HAVE_ODOMETRY TRUE)
+  if(TARGET opencv_rgbd)
+    opencv_apps_add_nodelet(rgbd_odometry src/nodelet/rgbd_odometry_nodelet.cpp)
+    set(OPENCV_HAVE_RGBD TRUE)
+  endif()
+endif()
+
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
   ${_opencv_apps_nodelet_cppfiles}
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+if(OPENCV_APPS_HAVE_DETECTION_3D OR OPENCV_APPS_HAVE_ODOMETRY)
+  target_link_libraries(${PROJECT_NAME} ${tf2_ros_LIBRARIES})
+endif()
+if(OPENCV_APPS_HAVE_ODOMETRY)
+  add_dependencies(${PROJECT_NAME} ${nav_msgs_EXPORTED_TARGETS})
+endif()
+if(OPENCV_APPS_HAVE_DETECTION_3D)
+  # the messages of vision_msgs and visualization_msgs built in the same workspace before detection_3d
+  add_dependencies(${PROJECT_NAME} ${vision_msgs_EXPORTED_TARGETS} ${visualization_msgs_EXPORTED_TARGETS})
+endif()
 if(OPENCV_HAVE_DNN AND CURL_FOUND)
   target_include_directories(${PROJECT_NAME} PRIVATE ${CURL_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
@@ -852,6 +1001,9 @@ install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
 # rclpy on rospy for scripts/face_recognition_trainer.py, see ros1/python/rclpy/__init__.py
+# the configs of rviz of detection_3d
+install(FILES rviz/detection_3d_ros1.rviz rviz/detection_3d_lidar_ros1.rviz
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz)
 install(DIRECTORY ros1/python
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros1
         PATTERN "__pycache__" EXCLUDE)
@@ -876,11 +1028,28 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_hand_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_interactive_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_super_resolution.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_optical_flow.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_person_reid.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_edge_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_DNN)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_inpainting.launch)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_DETECTION_3D)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/detection_3d.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_ODOMETRY)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/laser_odometry.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_ODOMETRY OR NOT OPENCV_HAVE_RGBD)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/rgbd_odometry.launch)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)

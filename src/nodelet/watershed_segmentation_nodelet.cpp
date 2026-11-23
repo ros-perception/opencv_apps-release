@@ -186,7 +186,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
       std::vector<std::vector<cv::Point> > contours;
       std::vector<cv::Vec4i> hierarchy;
 
-      cv::findContours(markerMask, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+      cv::findContours(markerMask, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
 
       if (contours.empty())
       {
@@ -217,12 +217,14 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
         contours_msg.contours.push_back(contour_msg);
       }
 
+      // the same color of each region in every image, not random colors flickering image by image
+      cv::RNG rng(12345);
       std::vector<cv::Vec3b> color_tab;
       for (i = 0; i < comp_count; i++)
       {
-        int b = cv::theRNG().uniform(0, 255);
-        int g = cv::theRNG().uniform(0, 255);
-        int r = cv::theRNG().uniform(0, 255);
+        int b = rng.uniform(0, 255);
+        int g = rng.uniform(0, 255);
+        int r = rng.uniform(0, 255);
 
         color_tab.push_back(cv::Vec3b((uchar)b, (uchar)g, (uchar)r));
       }
@@ -336,6 +338,8 @@ public:
 
     add_seed_points_sub_ = create_subscription<opencv_apps::msg::Point2DArray>(
         "~/add_seed_points", 1, std::bind(&WatershedSegmentationNodelet::addSeedPointCb, this, std::placeholders::_1));
+    // the seeds may be of the clicks on the window
+    optionalInput("~/add_seed_points");
     img_pub_ = advertiseImage("~/image", 1);
     msg_pub_ = advertise<opencv_apps::msg::ContourArrayStamped>("~/contours", 1);
 
