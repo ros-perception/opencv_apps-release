@@ -1199,6 +1199,10 @@
   ],
   "publishers": [
    {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    },
@@ -1353,6 +1357,10 @@
   ],
   "publishers": [
    {
+    "name": "~/corners",
+    "type": "opencv_apps/msg/Point2DArrayStamped"
+   },
+   {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    }
@@ -1362,6 +1370,181 @@
    {
     "name": "/image",
     "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "detection_3d": {
+  "description": "Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image",
+  "node": "detection_3d",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "depth",
+    "description": "Source of the distances: depth (the depth image registered to the color image, 16UC1 in mm or 32FC1 in m, e.g. of an RGB-D camera) or points (a point cloud, e.g. of a LiDAR, transformed to the frame of camera_info by TF).",
+    "name": "depth_source",
+    "type": "string"
+   },
+   {
+    "default": 0.3,
+    "description": "The points within this distance (m) of the median depth of the box belong to the object.",
+    "name": "depth_threshold",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "probability",
+    "description": "The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is better), whose score is 1 / (1 + distance)",
+    "name": "face_confidence",
+    "type": "string"
+   },
+   {
+    "default": "detections",
+    "description": "Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes), rects (RectArrayStamped, ~/output of the tracking nodes) or skeletons (SkeletonArrayStamped, ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation, with the TF frames of the keypoints).",
+    "name": "input_type",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint.",
+    "name": "keypoint_radius",
+    "range": [
+     0,
+     50
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.5,
+    "description": "Minimum visibility of a keypoint of a skeleton to be localized.",
+    "name": "keypoint_visibility",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 10.0,
+    "description": "Maximum valid depth (m).",
+    "name": "max_depth",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.1,
+    "description": "Minimum valid depth (m).",
+    "name": "min_depth",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from the optical frame) of camera_info, instead of the raw image with the distortion of K and D",
+    "name": "rectified",
+    "type": "bool"
+   },
+   {
+    "default": 0.8,
+    "description": "Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box.",
+    "name": "roi_scale",
+    "range": [
+     0.1,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Prefix of the TF frames.",
+    "name": "tf_prefix",
+    "type": "string"
+   },
+   {
+    "default": 0.5,
+    "description": "An object within this distance (m) of an object of the same label in the previous images is the same object, and keeps its id.",
+    "name": "track_distance",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 10,
+    "description": "Number of images that a lost object keeps its id for.",
+    "name": "track_lost_frames",
+    "range": [
+     0,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "vision_msgs/msg/Detection3DArray"
+   },
+   {
+    "name": "~/markers",
+    "type": "visualization_msgs/msg/MarkerArray"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/camera_info",
+    "type": "sensor_msgs/msg/CameraInfo"
+   },
+   {
+    "name": "/depth",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/input",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
    }
   ]
  },
@@ -1493,6 +1676,12 @@
     "type": "bool"
    },
    {
+    "default": false,
+    "description": "The output of the model is the depth in meters (e.g. Depth Anything V2 Metric), published on ~/depth (32FC1), e.g. for the depth input of detection_3d, instead of the relative inverse depth on ~/inverse_depth (MiDaS)",
+    "name": "metric_depth",
+    "type": "bool"
+   },
+   {
     "default": "",
     "description": "Path or URL of the model (onnx) of the same input and output as MiDaS, empty for MiDaS v2.1 small. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
     "name": "model",
@@ -1524,6 +1713,101 @@
    },
    {
     "name": "~/inverse_depth",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_edge_detection": {
+  "description": "Nodelet to detect the edges with a DNN model, e.g. DexiNed",
+  "node": "dnn_edge_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_edge_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 512,
+    "description": "Height of the network input, 512 for DexiNed",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 512,
+    "description": "Width of the network input, 512 for DexiNed",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.12 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    }
   ],
@@ -1750,6 +2034,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
    {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
@@ -2165,6 +2453,386 @@
    }
   ]
  },
+ "dnn_inpainting": {
+  "description": "Nodelet to fill the masked region of the image with LaMa (OpenCV 5.0 or later)",
+  "node": "dnn_inpainting",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "cpu",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. cpu by default, as OpenCV 5.1 runs LaMa on the CPU also with cuda, which is slower",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_inpainting.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "Pixels to dilate the region to fill by, as the masks of segmentation (e.g. ~/label of dnn_semantic_segmentation) miss the edges of the objects, which LaMa extends otherwise",
+    "name": "mask_dilation",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as LaMa, empty for LaMa of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/mask",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_interactive_segmentation": {
+  "description": "Nodelet to segment the object given by a box or points with EfficientSAM",
+  "node": "dnn_interactive_segmentation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.mask.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the EfficientSAM model (onnx), empty for EfficientSAM-Ti of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/image/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/mask",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/mask/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "~/add_points",
+    "type": "opencv_apps/msg/Point2DArray"
+   },
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_object_detection": {
   "description": "Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO",
   "node": "dnn_object_detection",
@@ -2183,7 +2851,7 @@
    },
    {
     "default": "",
-    "description": "Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox",
+    "description": "Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox, nanodet and yolov8",
     "name": "classes",
     "type": "string"
    },
@@ -2219,7 +2887,7 @@
    },
    {
     "default": 640,
-    "description": "Height of the network input, a multiple of 32 for yolox",
+    "description": "Height of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet",
     "name": "input_height",
     "range": [
      1,
@@ -2229,7 +2897,7 @@
    },
    {
     "default": 640,
-    "description": "Width of the network input, a multiple of 32 for yolox",
+    "description": "Width of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet",
     "name": "input_width",
     "range": [
      1,
@@ -2245,13 +2913,13 @@
    },
    {
     "default": "",
-    "description": "Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "description": "Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S (yolox) or NanoDet-Plus (nanodet) trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
     "name": "model",
     "type": "string"
    },
    {
     "default": "yolox",
-    "description": "yolox for the YOLOX models (onnx), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb",
+    "description": "yolox for the YOLOX models (onnx), nanodet for NanoDet-Plus (onnx, input 416x416), yolov8 for the models of the output of YOLOv8, YOLOv9 and YOLO11 (onnx, OpenCV 4.9 or later), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb",
     "name": "model_type",
     "type": "string"
    },
@@ -2315,6 +2983,221 @@
    {
     "name": "/image",
     "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_optical_flow": {
+  "description": "Nodelet of dense optical flow with RAFT (DNN), the same outputs as fback_flow",
+  "node": "dnn_optical_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. RAFT runs on the CPU instead of CUDA with OpenCV 4.x, which crashes",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_optical_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 360,
+    "description": "Height of the network input, 360 for RAFT of opencv_zoo",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 480,
+    "description": "Width of the network input, 480 for RAFT of opencv_zoo",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the RAFT model (onnx) of the inputs 0 and 1 (the previous and the current image) and the output of the flow, empty for RAFT of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_person_reid": {
+  "description": "Nodelet to re-identify the people detected by another node with the YouTu person ReID model",
+  "node": "dnn_person_reid",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time",
+    "name": "approximate_sync",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_person_reid.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "person",
+    "description": "Label of the detections to re-identify, empty for all of them",
+    "name": "label",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise",
+    "name": "match_threshold",
+    "range": [
+     -1.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 100,
+    "description": "Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18",
+    "name": "sync_queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.1,
+    "description": "Rate of the feature of the new image in the moving average of the feature of the person",
+    "name": "update_rate",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/input",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
    }
   ]
  },
@@ -2603,6 +3486,81 @@
    },
    {
     "name": "~/label",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_super_resolution": {
+  "description": "Nodelet of super resolution of the image with a DNN model, e.g. ESPCN of dnn_superres",
+  "node": "dnn_super_resolution",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_super_resolution.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of dnn_superres, ESPCN or FSRCNN, whose scale is the scale of ~image, empty for ESPCN x2. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    }
   ],
@@ -3385,6 +4343,10 @@
     "type": "sensor_msgs/msg/Image"
    },
    {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
     "name": "~/output",
     "type": "opencv_apps/msg/FaceArrayStamped"
    }
@@ -3610,6 +4572,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
    {
     "name": "~/ellipses",
     "type": "opencv_apps/msg/RotatedRectArrayStamped"
@@ -4425,6 +5391,175 @@
    }
   ]
  },
+ "laser_odometry": {
+  "description": "Nodelet of the odometry of a LiDAR (e.g. Livox), by ICP of the scans to the local map",
+  "node": "laser_odometry",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor",
+    "name": "base_frame",
+    "type": "string"
+   },
+   {
+    "default": 1.0,
+    "description": "Maximum distance (m) of the corresponding points of the scan and the map, larger than the error of the initial guess of the constant velocity.",
+    "name": "correspondence_distance",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "points",
+    "description": "Type of input: points (sensor_msgs/PointCloud2 of a 3D LiDAR, e.g. Livox) or scan (sensor_msgs/LaserScan of a 2D LiDAR, whose motion is in its x-y plane)",
+    "name": "input_type",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1.0,
+    "description": "Period (s) to publish the 3D map (~/map).",
+    "name": "map_period",
+    "range": [
+     0.0,
+     3600.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map.",
+    "name": "map_voxel_size",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 50,
+    "description": "Maximum iterations of ICP of each scan.",
+    "name": "max_iterations",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 20,
+    "description": "Maximum points in a voxel of the map.",
+    "name": "max_points_per_voxel",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 50.0,
+    "description": "Maximum range (m) of the points, and of the map.",
+    "name": "max_range",
+    "range": [
+     0.1,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.3,
+    "description": "Minimum range (m) of the points, without the robot.",
+    "name": "min_range",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "odom",
+    "description": "Frame of the odometry, the robot (base_frame) at the start",
+    "name": "odom_frame",
+    "type": "string"
+   },
+   {
+    "default": 10000,
+    "description": "Number of the poses of ~/path, the trajectory for rviz, 0 for all of them.",
+    "name": "path_length",
+    "range": [
+     0,
+     1000000
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "Size (m) of the voxels of the map, e.g. 0.5 outdoors and 0.1 - 0.2 indoors; the scan is downsampled by its half to the map and by 1.5 times of it to the registration.",
+    "name": "voxel_size",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/map",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/odom",
+    "type": "nav_msgs/msg/Odometry"
+   },
+   {
+    "name": "~/path",
+    "type": "nav_msgs/msg/Path"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/points",
+    "type": "sensor_msgs/msg/PointCloud2"
+   }
+  ]
+ },
  "line_segment_detector": {
   "description": "Nodelet to detect line segments using the LineSegmentDetector",
   "node": "line_segment_detector",
@@ -5034,6 +6169,10 @@
   ],
   "publishers": [
    {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
     "name": "~/found",
     "type": "opencv_apps/msg/RectArrayStamped"
    },
@@ -5398,6 +6537,179 @@
   ],
   "services": [],
   "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "rgbd_odometry": {
+  "description": "Nodelet of the visual odometry of an RGB-D camera (cv::rgbd::RgbdOdometry, ICPOdometry and RgbdICPOdometry)",
+  "node": "rgbd_odometry",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor",
+    "name": "base_frame",
+    "type": "string"
+   },
+   {
+    "default": 0.1,
+    "description": "The images are registered to the keyframe until the camera turns this angle (rad) from it.",
+    "name": "keyframe_angle",
+    "range": [
+     0.0,
+     3.2
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.1,
+    "description": "The images are registered to the keyframe until the camera moves this distance (m) from it.",
+    "name": "keyframe_distance",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1.0,
+    "description": "Period (s) to publish the 3D map (~/map).",
+    "name": "map_period",
+    "range": [
+     0.0,
+     3600.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map.",
+    "name": "map_voxel_size",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 4.0,
+    "description": "Maximum valid depth (m).",
+    "name": "max_depth",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.07,
+    "description": "Maximum difference (m) of the depths of the corresponding points of the images.",
+    "name": "max_depth_diff",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "rgbd_icp",
+    "description": "Method of the odometry: rgbd (the photometric error of the image, cv::rgbd::RgbdOdometry), icp (the geometric error of the depth, cv::rgbd::ICPOdometry) or rgbd_icp (both, cv::rgbd::RgbdICPOdometry)",
+    "name": "method",
+    "type": "string"
+   },
+   {
+    "default": 0.3,
+    "description": "Minimum valid depth (m).",
+    "name": "min_depth",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "odom",
+    "description": "Frame of the odometry, the robot (base_frame) at the start",
+    "name": "odom_frame",
+    "type": "string"
+   },
+   {
+    "default": 10000,
+    "description": "Number of the poses of ~/path, the trajectory for rviz, 0 for all of them.",
+    "name": "path_length",
+    "range": [
+     0,
+     1000000
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Subscribe the image; false for a depth camera without the image, of method icp",
+    "name": "use_image",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/map",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/odom",
+    "type": "nav_msgs/msg/Odometry"
+   },
+   {
+    "name": "~/path",
+    "type": "nav_msgs/msg/Path"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/camera_info",
+    "type": "sensor_msgs/msg/CameraInfo"
+   },
+   {
+    "name": "/depth",
+    "type": "sensor_msgs/msg/Image"
+   },
    {
     "name": "/image",
     "type": "sensor_msgs/msg/Image"
