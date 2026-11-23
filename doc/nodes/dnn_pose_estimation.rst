@@ -14,6 +14,8 @@ Human pose estimation with MediaPipe BlazePose of opencv_zoo (Apache 2.0): the p
      - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6)
    * - OpenCV
      - OpenCV 4.9 or later, which reads the MediaPipe models
+   * - Group
+     - Human and hand poses, the nodes of which publish ``~/skeletons`` (SkeletonArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_pose_estimation.gif
    :alt: demo of dnn_pose_estimation
@@ -27,6 +29,10 @@ Usage
    ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/camera/image_raw debug_view:=false
    # ROS 1
    roslaunch opencv_apps dnn_pose_estimation.launch image:=/camera/image_raw debug_view:=false
+   # ROS 2, with detection_3d: the 3D boxes and the TF frames of the persons and of their keypoints, from the depth image registered to the color image (or, without depth:=, the depth estimated from the color image by dnn_depth_estimation), shown in rviz2
+   ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/camera/camera/color/image_raw depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true
+
+The topics of the depth above are those of an Intel RealSense camera by realsense2_camera, with the depth aligned to the color image, which it does not publish by default: ``ros2 launch realsense2_camera rs_launch.py align_depth.enable:=true`` (ROS 2) or ``roslaunch realsense2_camera rs_camera.launch align_depth:=true`` (ROS 1). On ROS 2 the topics are in ``/camera/camera``, as the default namespace (``camera_namespace``) and name (``camera_name``) of its node are both ``camera``; with ``camera_namespace:=/`` they are in ``/camera`` as on ROS 1. With another RGB-D camera, give its depth registered to the color image (of the pixels of the color image) and the camera_info of the color image.
 
 Try it with the demo video
 --------------------------
