@@ -44,6 +44,7 @@ import launch_testing.actions
 import numpy as np
 import pytest
 import rclpy
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 from opencv_apps.msg import Point2D, Point2DArray
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image
 
@@ -59,6 +60,9 @@ if os.environ.get('OPENCV_APPS_HAVE_OPTFLOW', '1') == '0':  # simple_flow needs 
     NODES.remove('simple_flow')
 if os.environ.get('OPENCV_APPS_HAVE_LSD', '1') == '0':  # see OPENCV_HAVE_LSD in CMakeLists.txt
     NODES.remove('line_segment_detector')
+if os.environ.get('OPENCV_APPS_HAVE_XOBJDETECT', '1') == '0':  # OpenCV 5 without opencv_contrib's xobjdetect
+    NODES.remove('face_detection')
+    NODES.remove('people_detect')
 OUTPUTS = ['/%s/image' % name for name in NODES] + ['/image_converter/output_video/raw',
                                                      '/image_converter/output_video/compressed']
 
@@ -130,11 +134,14 @@ class TestNodes(unittest.TestCase):
             info.header = msg.header
             compressed = CompressedImage(format='jpeg', data=cv2.imencode('.jpg', img)[1].tobytes())
             compressed.header = msg.header
-            image_pub.publish(msg)
-            info_pub.publish(info)
-            compressed_pub.publish(compressed)
-            seed_pub.publish(seeds)
-            template_pub.publish(templ_msg)
+            for publisher, message in [(image_pub, msg), (info_pub, info), (compressed_pub, compressed),
+                                       (seed_pub, seeds), (template_pub, templ_msg)]:
+                try:
+                    publisher.publish(message)
+                except _rclpy.RCLError as e:
+                    # a reliable publish may fail under the load of all the nodes ("cannot publish data"); the
+                    # messages are published again at the next loop
+                    print('publish failed, retried at the next loop: %s' % e)
             rclpy.spin_once(node, timeout_sec=0.1)
             count += 1
         self.assertEqual(sorted(set(OUTPUTS) - set(received)), [])
