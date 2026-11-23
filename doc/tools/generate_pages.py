@@ -53,26 +53,48 @@ MEDIA_URL = DOCUMENTATION_URL + 'media/'
 CLIPS_URL = MEDIA_URL + 'clips/'
 TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/'
 
+# the groups of the nodes by what they find: the nodes of a group publish the same kind of results, so that one can
+# replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
-    ('Image processing', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                          'morphology', 'pyramids', 'smoothing', 'threshold']),
-    ('Color', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter', 'compare_histogram']),
-    ('Features, lines and contours', ['corner_harris', 'goodfeature_track', 'hough_lines', 'hough_circles',
-                                      'line_segment_detector', 'find_contours', 'general_contours',
-                                      'contour_moments', 'convex_hull', 'blob_detection']),
-    ('Segmentation', ['segment_objects', 'watershed_segmentation', 'background_subtraction']),
-    ('Motion and tracking', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr', 'camshift', 'tracking',
-                             'match_template']),
-    ('Detection and recognition', ['face_detection', 'face_recognition', 'people_detect', 'qrcode_detection',
-                                   'barcode_detection', 'aruco_detection']),
-    ('Deep learning (cv::dnn)', ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition',
-                                 'dnn_object_detection', 'dnn_image_classification', 'dnn_semantic_segmentation',
-                                 'dnn_depth_estimation', 'dnn_text_detection', 'dnn_pose_estimation',
-                                 'dnn_hand_pose_estimation', 'dnn_tracking']),
+    ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'dnn_edge_detection',
+                       'equalize_histogram', 'morphology', 'pyramids', 'smoothing', 'threshold',
+                       'dnn_super_resolution', 'dnn_inpainting']),
+    ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
+                             'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
+                             'contour_moments', 'convex_hull']),
+    ('Segmentation', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter',
+                      'background_subtraction', 'segment_objects', 'watershed_segmentation',
+                      'dnn_semantic_segmentation', 'dnn_interactive_segmentation']),
+    ('Image classification', ['dnn_image_classification']),
+    ('Object detection', ['people_detect', 'dnn_object_detection', 'dnn_person_reid']),
+    ('Codes and markers', ['qrcode_detection', 'barcode_detection', 'aruco_detection']),
+    ('Text detection and recognition', ['dnn_text_detection']),
+    ('Faces', ['face_detection', 'face_recognition', 'dnn_face_detection', 'dnn_face_recognition',
+               'dnn_facial_expression_recognition']),
+    ('Human and hand poses', ['dnn_pose_estimation', 'dnn_hand_pose_estimation']),
+    ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
+    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'dnn_optical_flow', 'phase_corr']),
+    ('Histogram comparison', ['compare_histogram']),
+    ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
+    ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
 ]
 # the descriptions of the nodes, instead of the documentation comments of their sources, which are the comments of
 # the samples of OpenCV for the most of the nodes other than the dnn nodes
 DESCRIPTIONS = {
+    'detection_3d': 'Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` '
+                    'of the 2D results of the other nodes, ``~/detections`` of the detection nodes '
+                    '(``input_type:=detections``), ``~/faces`` of the face nodes (``faces``), ``~/output`` of the '
+                    'tracking nodes (``rects``) or ``~/skeletons`` of the pose nodes (``skeletons``, with the TF '
+                    'frames of the keypoints), with a depth image registered to their color image, e.g. of an RGB-D '
+                    'camera or ``~/depth`` of dnn_depth_estimation (``depth_source:=depth``), or a point cloud, e.g. '
+                    'of a LiDAR, transformed to the camera '
+                    'frame by TF (``depth_source:=points``). The points of a 2D box are the pixels of the depth image '
+                    'in the box or the points of the cloud projected into the box, the depth of the object is the '
+                    'median of their depths, and its 3D box is the extent of the points within ``depth_threshold`` '
+                    'of the median, as '
+                    '`yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of '
+                    'their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs '
+                    '(0.0.2) have only the class id of the detections, and the labels are in the TF frames.',
     'adding_images': 'Blends two images, ``image1`` and ``image2``, with ``cv::addWeighted()``: alpha * image1 + '
                      'beta * image2 + gamma. The two images are synchronized by their time stamps.',
     'discrete_fourier_transform': 'Shows the magnitude spectrum of the discrete Fourier transform '
@@ -148,21 +170,96 @@ DESCRIPTIONS = {
                        'of the markers.',
 }
 # the short descriptions of the categories, on the top page and README.md
+# the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
-    'Image processing': 'Filter and transform the images: edges, histogram equalization, morphology, image '
-                        'pyramids, smoothing, thresholds and the Fourier transform.',
-    'Color': 'Extract the pixels in a range of colors in HSV, HLS, L*a*b* or RGB, and compare the color histograms.',
-    'Features, lines and contours': 'Find the corners, lines, line segments, circles, blobs and contours, with their '
-                                    'moments and convex hulls.',
-    'Segmentation': 'Separate the foreground and the objects: background subtraction, connected components and '
-                    'watershed.',
-    'Motion and tracking': 'Estimate the motion with the optical flows and the phase correlation, and track a '
-                           'target given by the mouse or a service.',
-    'Detection and recognition': 'Detect and recognize the faces and the people with the classic detectors, and '
-                                 'decode QR codes, barcodes and ArUco markers.',
-    'Deep learning (cv::dnn)': 'Run the DNN models of opencv_zoo with cv::dnn on the CPU or CUDA: faces, '
-                               'expressions, objects, image classes, semantic segmentation, depth, text, human and '
-                               'hand poses, and tracking. The models are downloaded at the first run.',
+    'Image filters': ('Filter and transform the images: edges (also by DexiNed), histogram equalization, '
+                      'morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super '
+                      'resolution and the inpainting by a DNN.',
+                      'the processed image in ``~/image``'),
+    'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
+                            'contours with their bounding shapes, moments and convex hulls.',
+                            '``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` '
+                            '(CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of '
+                            'convex_hull), by the kind of the features'),
+    'Segmentation': ('Divide the image into regions by the class of each pixel: the pixels in a range of colors, '
+                     'the foreground, the connected regions, the classes of a DNN, and the object given by a box or '
+                     'points.',
+                     'the mask or label image, ``~/image`` of the color filters and background_subtraction, '
+                     '``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and '
+                     '``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation '
+                     'and dnn_interactive_segmentation'),
+    'Image classification': ('Find what the whole image shows, the classes of ImageNet.',
+                             '``~/detections`` (DetectionArrayStamped), the classes with their scores'),
+    'Object detection': ('Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of '
+                         'dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the '
+                         'people of ``~/detections`` over the images by their appearance (dnn_person_reid, a '
+                         'post-process of the detections).',
+                         '``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for '
+                         'dnn_person_reid'),
+    'Codes and markers': ('Find and decode QR codes, barcodes and ArUco markers.',
+                          '``~/detections`` (DetectionArrayStamped), with the decoded data and the corners'),
+    'Text detection and recognition': ('Find the texts and read them (OCR).',
+                                       '``~/detections`` (DetectionArrayStamped), with the recognized text'),
+    'Faces': ('Detect and recognize the faces and their expressions.', '``~/faces`` (FaceArrayStamped)'),
+    'Human and hand poses': ('Estimate the poses of the people and the hands.',
+                             '``~/skeletons`` (SkeletonArrayStamped)'),
+    'Tracking': ('Track a target given by ``set_roi`` or the mouse.',
+                 '``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift'),
+    'Optical flow and motion': ('Estimate the motion of the image.',
+                                '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
+    'Histogram comparison': ('Compare the color histogram of the image with a reference.',
+                             '``~/distance`` (Float64)'),
+    'Depth and 3D localization': ('Estimate the depth of a color image by a DNN, and localize the objects, the faces, '
+                                  'the tracked targets and the human and hand skeletons of the nodes above in 3D, '
+                                  'with a depth image of an RGB-D camera or of the depth estimation, or a point cloud '
+                                  'of a LiDAR, and publish their TF frames.',
+                                  '``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and '
+                                  '``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the '
+                                  'TF frames of detection_3d'),
+    'Odometry and maps': ('Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the '
+                          'odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and '
+                          'build the 3D map and the 3D trajectory.',
+                          '``~/odom`` (nav_msgs/Odometry), the TF odom -> base_frame, ``~/path`` (nav_msgs/Path) and '
+                          '``~/map`` (PointCloud2, the 3D map)'),
+}
+# the main output of each node, under its tile, when it is not ~/image
+NODE_OUTPUTS = {
+    'dnn_depth_estimation': '~/inverse_depth', 'dnn_semantic_segmentation': '~/label',
+    'dnn_interactive_segmentation': '~/mask',
+    'corner_harris': '~/corners', 'goodfeature_track': '~/corners', 'hough_lines': '~/lines',
+    'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
+    'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
+    'detection_3d': '~/detections',
+    'rgbd_odometry': '~/odom, ~/map', 'laser_odometry': '~/odom, ~/map',
+}
+for _node in ['find_contours', 'general_contours', 'contour_moments', 'segment_objects', 'watershed_segmentation']:
+    NODE_OUTPUTS[_node] = '~/contours'
+for _category, _topic in [('Image classification', '~/detections'), ('Object detection', '~/detections'),
+                          ('Codes and markers', '~/detections'), ('Text detection and recognition', '~/detections'),
+                          ('Faces', '~/faces'),
+                          ('Human and hand poses', '~/skeletons'), ('Tracking', '~/output'),
+                          ('Optical flow and motion', '~/flows')]:
+    for _node in dict(CATEGORIES)[_category]:
+        NODE_OUTPUTS.setdefault(_node, _topic)
+# the notes of the published topics: the topics added for the common output of the group are recommended, and the
+# former topics are kept for compatibility
+RECOMMENDED = 'Recommended, opencv_apps 3.0.1 and later. '
+TOPIC_NOTES = {
+    'people_detect': {'~/detections': RECOMMENDED + 'The people, as the other detection nodes: the centers of the '
+                                                    'rectangles, the label ``person`` and the score of the HOG '
+                                                    'detector.',
+                      '~/found': 'Kept for compatibility, use ``~/detections``. The top-left corners of the '
+                                 'rectangles.'},
+    'corner_harris': {'~/corners': RECOMMENDED + 'The corners, a local maximum of the pixels over ``threshold`` '
+                                                 'for each corner.'},
+    'face_recognition': {'~/faces': RECOMMENDED + 'The same as ``~/output``, with the name of the other face nodes.',
+                         '~/output': 'Kept for compatibility, use ``~/faces``.'},
+    'dnn_face_recognition': {'~/faces': RECOMMENDED + 'The same as ``~/output``, with the name of the other face '
+                                                      'nodes.',
+                             '~/output': 'Kept for compatibility, use ``~/faces``.'},
+    'general_contours': {'~/contours': RECOMMENDED + 'The contours, in the order of ``~/rectangles`` and '
+                                                     '``~/ellipses``.'},
+    'contour_moments': {'~/contours': RECOMMENDED + 'The contours, in the order of ``~/moments`` (by the area).'},
 }
 # the distributions, their OpenCV, and the latest version of opencv_apps for them (None for the latest release):
 # 3.0.0 supports ROS 2, and is not released for noetic (end of life), whose last release is 2.0.2
@@ -180,6 +277,9 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow',
+              'dnn_interactive_segmentation', 'dnn_person_reid', 'dnn_inpainting', 'dnn_edge_detection']:
+    SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
     'simple_flow': (None, 'the optflow module of opencv_contrib'),
@@ -196,26 +296,37 @@ OPENCV_REQUIREMENTS = {
     'dnn_hand_pose_estimation': ('4.9', 'OpenCV 4.9 or later, which reads the MediaPipe hand pose model'),
     'dnn_tracking': ('4.5.4', 'OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later '
                               'for VitTrack'),
+    'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
+    'dnn_super_resolution': ('4.12', 'OpenCV 4.12 or later, which runs the onnx models of dnn_superres (4.10 fails on '
+                                     'DepthToSpace)'),
+    'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT; on the CPU with OpenCV 4.x, whose CUDA backend '
+                                 'crashes with RAFT'),
+    'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
+    'dnn_inpainting': ('5.0', 'OpenCV 5.0 or later, which reads LaMa (OpenCV 4.6 - 4.12 fail to read it)'),
+    'dnn_edge_detection': ('4.12', 'OpenCV 4.12 or later, which reads DexiNed (4.10 fails on DequantizeLinear)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
-              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:
+              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
+              'dnn_person_reid']:
     OPENCV_REQUIREMENTS[_node] = ('4.5.4', 'OpenCV 4.5.4 or later')
 
 
 # the notes of the distributions, which depend on their OpenCV
 ROS_NOTES = {'dnn_tracking': 'DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on '
                              'lyrical (OpenCV 4.10)',
-             'tracking': 'the trackers other than MIL need libopencv-contrib'}
+             'tracking': 'the trackers other than MIL need libopencv-contrib',
+             'dnn_edge_detection': 'not on lyrical, whose OpenCV 4.10 cannot read DexiNed',
+             'dnn_super_resolution': 'not on lyrical, whose OpenCV 4.10 fails on the models'}
 
 
 def version_tuple(version):
     return tuple(int(v) for v in version.split('.')) + (0,) * (3 - len(version.split('.')))
 
 
-def availability(node):
-    """Return the rows of the versions of opencv_apps, ROS and OpenCV which the node needs."""
+def distributions_of(node):
+    """Return the distributions which the node runs on, and the ones whose OpenCV is too old for it."""
     since = SINCE.get(node, '1.11')
-    minimum, opencv = OPENCV_REQUIREMENTS.get(node, (None, 'any version of the distributions'))
+    minimum = OPENCV_REQUIREMENTS.get(node, (None, ''))[0]
     distributions, old_opencv = [], []
     for name, ros, ubuntu, opencv_version, apps in DISTRIBUTIONS:
         if apps and version_tuple(apps) < version_tuple(since):
@@ -224,16 +335,51 @@ def availability(node):
             old_opencv.append('%s (OpenCV %s)' % (name, opencv_version))
             continue
         distributions.append(name)
-    ros = ', '.join(distributions) + ' and later'
+    return distributions, old_opencv
+
+
+def availability(node):
+    """Return the rows of the versions of opencv_apps, ROS and OpenCV which the node needs."""
+    since = SINCE.get(node, '1.11')
+    opencv = OPENCV_REQUIREMENTS.get(node, (None, 'any version of the distributions'))[1]
+    distributions, old_opencv = distributions_of(node)
+    # the nodes which need a newer OpenCV than all the distributions, e.g. OpenCV 5 built from source
+    ros = (', '.join(distributions) + ' and later') if distributions else 'any, with OpenCV built from source'
     if old_opencv:
         ros += '; not %s' % ', '.join(old_opencv)
     if node in ROS_NOTES:
         ros += '; ' + ROS_NOTES[node]
-    if since == '3.0.0':
-        apps = '3.0.0 and later'
+    if version_tuple(since) >= version_tuple('3.0.0'):
+        apps = '%s and later' % since
     else:
         apps = '%s and later (ROS 1), 3.0.0 and later (ROS 2)' % since
     return [['opencv_apps', apps], ['ROS', ros], ['OpenCV', opencv]]
+
+
+def tiers(nodes):
+    """Split the nodes by the distributions which they run on, the nodes of more distributions first."""
+    groups = {}
+    for node in nodes:
+        groups.setdefault(tuple(distributions_of(node)[0]), []).append(node)
+    return sorted(groups.items(), key=lambda item: -len(item[0]))
+
+
+def tier_label(distributions):
+    """Return e.g. 'ROS 1: noetic and later, ROS 2: jazzy and later' for the distributions of a tier."""
+    labels = []
+    for ros in ['ROS 1', 'ROS 2']:
+        names = [name for name, version, _, _, _ in DISTRIBUTIONS if version == ros and name in distributions]
+        if names:
+            labels.append('%s: %s and later' % (ros, names[0]))
+    return ', '.join(labels) or 'ROS 1 and ROS 2, with OpenCV built from source'
+
+
+def category_of(node):
+    return next(category for category, nodes in CATEGORIES if node in nodes)
+
+
+def rst_to_html(text):
+    return re.sub(r'``(.*?)``', r'<code>\1</code>', text)
 
 
 def distributions_table():
@@ -261,6 +407,74 @@ def message_link(message_type):
     if package == 'opencv_apps':
         return ':ref:`%s <msg-%s>`' % (message_type, name)
     return '``%s``' % message_type
+
+
+# the inputs of the usage of the nodes whose input is not image, (ROS 2, ROS 1) if they differ, e.g. the topics of
+# realsense2_camera with align_depth for detection_3d
+USAGE_INPUTS = {
+    'adding_images': 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true',
+    'detection_3d': ('input:=/dnn_object_detection/detections depth:=/camera/camera/aligned_depth_to_color/image_raw '
+                     'camera_info:=/camera/camera/color/camera_info',
+                     'input:=/dnn_object_detection/detections depth:=/camera/aligned_depth_to_color/image_raw '
+                     'camera_info:=/camera/color/camera_info'),
+    'rgbd_odometry': ('image:=/camera/camera/color/image_raw depth:=/camera/camera/aligned_depth_to_color/image_raw '
+                      'camera_info:=/camera/camera/color/camera_info base_frame:=camera_link',
+                      'image:=/camera/color/image_raw depth:=/camera/aligned_depth_to_color/image_raw '
+                      'camera_info:=/camera/color/camera_info base_frame:=camera_link'),
+    'laser_odometry': 'points:=/livox/lidar base_frame:=base_link',
+    'dnn_person_reid': 'image:=/camera/image_raw input:=/dnn_object_detection/detections',
+}
+
+
+# the launch files of the 2D results which run detection_3d (detection_3d:=true, launch/detection_3d_pipeline.launch.xml)
+# in the usage of the nodes, with the depth of realsense2_camera with align_depth, or the depth estimated without it
+USAGE_3D = {
+    'detection_3d': 'dnn_object_detection',
+    'dnn_object_detection': 'dnn_object_detection',
+    'dnn_pose_estimation': 'dnn_pose_estimation',
+}
+
+
+USAGE_3D_RESULTS = {
+    'dnn_object_detection': 'detected objects',
+    'dnn_pose_estimation': 'persons and of their keypoints',
+}
+
+
+def usage_3d(node):
+    """Return the lines of the usage of detection_3d:=true of the launch file of the 2D results, or []."""
+    if node not in USAGE_3D:
+        return []
+    return ['   # ROS 2, with detection_3d: the 3D boxes and the TF frames of the %s, from the depth image registered to '
+            'the color image (or, without depth:=, the depth estimated from the color image by dnn_depth_estimation), '
+            'shown in rviz2' % USAGE_3D_RESULTS[USAGE_3D[node]],
+            '   ros2 launch opencv_apps %s.launch.xml image:=/camera/camera/color/image_raw '
+            'depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true' % USAGE_3D[node]]
+
+
+def usage_realsense(node):
+    """Return the lines of the note on the topics of realsense2_camera in the usage of the node, or []."""
+    if node not in ('detection_3d', 'rgbd_odometry') and node not in USAGE_3D:
+        return []
+    return ['The topics of the depth above are those of an Intel RealSense camera by realsense2_camera, with the depth '
+            'aligned to the color image, which it does not publish by default: ``ros2 launch realsense2_camera '
+            'rs_launch.py align_depth.enable:=true`` (ROS 2) or ``roslaunch realsense2_camera rs_camera.launch '
+            'align_depth:=true`` (ROS 1). On ROS 2 the topics are in ``/camera/camera``, as the default namespace '
+            '(``camera_namespace``) and name (``camera_name``) of its node are both ``camera``; with '
+            '``camera_namespace:=/`` they are in ``/camera`` as on ROS 1. With another RGB-D camera, give its depth '
+            'registered to the color image (of the pixels of the color image) and the camera_info of the color '
+            'image.', '']
+
+
+def usage_arguments(node, ros1=False):
+    """Return the arguments of the usage of the node: its inputs, and debug_view:=false if the launch file has it."""
+    arguments = USAGE_INPUTS.get(node, 'image:=/camera/image_raw')
+    if isinstance(arguments, tuple):
+        arguments = arguments[1 if ros1 else 0]
+    path = os.path.join(PACKAGE_DIR, 'launch', node + '.launch.xml')
+    if os.path.exists(path) and any(a.get('name') == 'debug_view' for a in ET.parse(path).getroot().iter('arg')):
+        arguments += ' debug_view:=false'
+    return arguments
 
 
 def ros1_arguments(launch_file):
@@ -316,7 +530,9 @@ def node_classes():
 def demo_section(node, demo):
     """Return the commands to run the node on the input video of its demo, from doc/demos.yaml.
 
-    The commands which keep running (the publishers, the nodes) are in their own terminals.
+    The commands which keep running (the publishers, the nodes) are in their own terminals. With launch_command (e.g.
+    detection_3d:=true of the launch file of a detector), the demo runs it, and the commands of the nodes of its
+    pipeline (pipeline, a list of the titles and the commands) follow, as what runs in it.
     """
     clip = demo['clip']
     url = (TEST_VIDEOS_URL + clip) if clip.startswith('test/') else (CLIPS_URL + clip)
@@ -330,20 +546,30 @@ def demo_section(node, demo):
     # the shell variables of prepare (e.g. H=...) are set in the terminal of the node
     prepare = [c for c in demo.get('prepare', []) if not re.match(r'^[A-Z_]+=', c)]
     variables = [c for c in demo.get('prepare', []) if re.match(r'^[A-Z_]+=', c)]
-    terminals = [('publish the video as image in a loop',
-                  ['ros2 run image_publisher image_publisher_node %s --ros-args -p publish_rate:=10.0 '
-                   '-r image_raw:=image' % video]),
+    # the files to download and the publisher of the input, the video and image_publisher by default
+    downloads = [(TEST_VIDEOS_URL + d) if d.startswith('test/') else d for d in demo.get('downloads', [])] or [url]
+    publisher = demo.get('publisher', 'ros2 run image_publisher image_publisher_node %s --ros-args '
+                                      '-p publish_rate:=10.0 -r image_raw:=image' % video)
+    terminals = [('publish the video as image in a loop' if 'publisher' not in demo else
+                  'publish the input in a loop', [publisher]),
                  ('run the node' + (' with the parameters of the demo' if arguments else ''),
                   variables + [('ros2 launch opencv_apps %s.launch.xml %s %s'
                                 % (launch_file, image, arguments)).rstrip()])]
     for step in demo.get('steps', []):
         title = 'run, keep it running' if step.endswith('&') else 'then run once'
         terminals.append((title, [step.rstrip('&').rstrip()]))
-    view = 'ros2 run rqt_image_view rqt_image_view /%s/%s' % (node_name, demo.get('view', 'image'))
+    view = demo.get('view_command',
+                    'ros2 run rqt_image_view rqt_image_view /%s/%s' % (node_name, demo.get('view', 'image')))
     terminals.append(('view the result', [view]))
-    lines = ['Try it with the demo video', '--------------------------', '',
-             'Download the input video of the demo above, publish it as ``image`` with ``image_publisher``, and run '
-             'the node on it, in the terminals:', '', '.. code-block:: bash', '', '   wget %s' % url]
+    # launch_command instead of the node, with the nodes of its pipeline each in its own terminal
+    pipeline = [(step['title'], [step['command']]) for step in demo.get('pipeline', [])]
+    if demo.get('launch_command'):
+        terminals = [terminals[0], (demo['launch_command_title'], [demo['launch_command']])]
+    intro = ('Download the input video of the demo above, publish it as ``image`` with ``image_publisher``, and run '
+             'the node on it, in the terminals:' if 'publisher' not in demo else
+             'Download the input of the demo above, publish it, and run the node on it, in the terminals:')
+    lines = ['Try it with the demo video', '--------------------------', '', intro, '', '.. code-block:: bash', '']
+    lines += ['   wget %s' % download for download in downloads]
     lines += ['   ' + command for command in prepare]
     for number, (title, commands) in enumerate(terminals, 1):
         lines.append('   # terminal %d: %s' % (number, title))
@@ -351,7 +577,15 @@ def demo_section(node, demo):
     lines.append('')
     if demo.get('note'):
         lines += [demo['note'], '']
-    if not demo.get('steps') and not demo.get('prepare') and image == 'image:=image':
+    if pipeline:
+        title = demo['pipeline_title']
+        lines += [title, '^' * len(title), '', demo['pipeline_note'], '', '.. code-block:: bash', '',
+                  '   # terminal 1: publish the input in a loop, as above']
+        for number, (title, commands) in enumerate(pipeline, 2):
+            lines.append('   # terminal %d: %s' % (number, title))
+            lines += ['   ' + command for command in commands]
+        lines.append('')
+    if not demo.get('steps') and not demo.get('prepare') and image == 'image:=image' and 'publisher' not in demo:
         lines += ['In ROS 1:', '', '.. code-block:: bash', '',
                   '   # terminal 1',
                   '   rosrun image_publisher image_publisher %s _publish_rate:=10 __name:=camera' % video,
@@ -360,6 +594,33 @@ def demo_section(node, demo):
                    % (launch_file, ros1_arguments(launch_file), arguments)).rstrip(),
                   '']
     lines += ['See :doc:`../credits` for the license of the video.', '']
+    return lines
+
+
+def variants_section(node, demo):
+    """Return the demos of the variants of the node (e.g. the models of a dnn node), from variants of doc/demos.yaml.
+
+    Each variant has its demo video, <node>_<name>.gif (<node>.gif for the default), and its launch arguments, or
+    its launch file (launch_file) or its command (command).
+    """
+    title = demo.get('variants_title', 'Variants')
+    lines = [title, '-' * len(title), '', demo.get('variants_note', ''), '']
+    for variant in demo['variants']:
+        name = variant['name']
+        gif = node if variant.get('default') else '%s_%s' % (node, name)
+        lines += [variant['title'], '^' * len(variant['title']), '',
+                  '.. image:: %s%s.gif' % (MEDIA_URL, gif), '   :alt: demo of %s with %s' % (node, name), '']
+        arguments = ' '.join('%s:=%s' % (k, str(v).lower() if isinstance(v, bool) else v)
+                             for k, v in sorted(variant.get('launch_args', {}).items()))
+        # the launch file of the variant (e.g. an example of the node), or the command of the variant
+        command = variant.get('command', 'ros2 launch opencv_apps %s.launch.xml %s %s' % (
+            variant.get('launch_file', demo.get('launch_file', node)),
+            variant.get('image', demo.get('image', 'image:=image')), arguments))
+        # the commands of the variant before the node, e.g. to publish its input
+        lines += ['.. code-block:: bash', ''] + ['   ' + c for c in variant.get('commands', [])]
+        lines += ['   ' + command.rstrip(), '']
+        if variant.get('note'):
+            lines += [variant['note'], '']
     return lines
 
 
@@ -378,28 +639,45 @@ def node_page(node, interface, classes, files, demo=None):
         if description:
             lines += [description.rstrip('.') + '.', '']
     lines += ['.. list-table::', '   :stub-columns: 1', '']
-    for name, value in availability(node):
+    category = category_of(node)
+    for name, value in availability(node) + [['Group', '%s, the nodes of which publish %s' % (
+            category, CATEGORY_DESCRIPTIONS[category][1])]]:
         lines += ['   * - ' + name, '     - ' + value]
     lines += ['']
+    if demo and demo.get('figure'):
+        # a figure of the node in doc/images, e.g. its pipeline
+        lines += ['.. figure:: ../%s' % demo['figure']['path'], '   :alt: %s' % demo['figure']['caption'], '',
+                  '   ' + demo['figure']['caption'], '']
     lines += ['.. image:: %s%s.gif' % (MEDIA_URL, node), '   :alt: demo of %s' % node, '',
               'Usage', '-----', '', '.. code-block:: bash', '',
               '   # ROS 2',
-              '   ros2 launch opencv_apps %s.launch.xml %s debug_view:=false' % (
-                  node, 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true'
-                  if node == 'adding_images' else 'image:=/camera/image_raw'),
+              '   ros2 launch opencv_apps %s.launch.xml %s' % (node, usage_arguments(node)),
               '   # ROS 1',
-              '   roslaunch opencv_apps %s.launch %s debug_view:=false%s' % (
-                  node, 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true'
-                  if node == 'adding_images' else 'image:=/camera/image_raw', ros1_arguments(node)), '']
+              '   roslaunch opencv_apps %s.launch %s%s' % (
+                  node, usage_arguments(node, ros1=True), ros1_arguments(node))] + usage_3d(node) + ['']
+    lines += usage_realsense(node)
     if demo:
         lines += demo_section(node, demo)
+        if demo.get('variants'):
+            lines += variants_section(node, demo)
     if interface['subscriptions']:
         lines += ['Subscribed topics', '-----------------', '', table(
             ['Topic', 'Type'], [['``%s``' % t['name'].lstrip('/'), message_link(t['type'])]
                                 for t in interface['subscriptions']])]
     if interface['publishers']:
-        lines += ['Published topics', '----------------', '', table(
-            ['Topic', 'Type'], [['``%s``' % t['name'], message_link(t['type'])] for t in interface['publishers']])]
+        notes = TOPIC_NOTES.get(node)
+        if notes:
+            # the mark in the topic column, as the theme may hide the end of a wide table
+            marks = {RECOMMENDED: ' **(recommended)**', 'Kept for compatibility': ' (compatibility)'}
+            publishers = table(['Topic', 'Type', 'Note'], [
+                ['``%s``%s' % (t['name'], ''.join(mark for prefix, mark in marks.items()
+                                                  if notes.get(t['name'], '').startswith(prefix))),
+                 message_link(t['type']), notes.get(t['name'], '')]
+                for t in interface['publishers']])
+        else:
+            publishers = table(['Topic', 'Type'], [['``%s``' % t['name'], message_link(t['type'])]
+                                                   for t in interface['publishers']])
+        lines += ['Published topics', '----------------', '', publishers]
     if interface['services']:
         lines += ['Services', '--------', '', table(
             ['Service', 'Type'], [['``%s``' % t['name'], '``%s``' % t['type']] for t in interface['services']])]
@@ -447,26 +725,52 @@ def nodes_index():
              'Each node subscribes ``image`` (``sensor_msgs/msg/Image``), and publishes its results in the namespace '
              'of the node, e.g. ``edge_detection/image``. Remap ``image`` to the topic of the camera.', '']
     for category, nodes in CATEGORIES:
-        lines += [category, '-' * len(category), '', '.. toctree::', '   :maxdepth: 1', '']
+        description, output = CATEGORY_DESCRIPTIONS[category]
+        lines += [category, '-' * len(category), '', '%s Output: %s.' % (description, output), '',
+                  '.. toctree::', '   :maxdepth: 1', '']
         lines += ['   nodes/%s' % n for n in nodes] + ['']
     return '\n'.join(lines)
+
+
+# the figures of the groups (the URL and the alt text of each), under the description of the group on the top page and
+# README.md
+CATEGORY_FIGURES = {
+    'Depth and 3D localization': [
+        ('https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg',
+         'the pipeline of detection_3d'),
+        ('https://raw.githubusercontent.com/ros-perception/opencv_apps/docs-media/detection_3d_skeletons_rviz.gif',
+         'detection_3d of the human skeletons in rviz'),
+    ],
+}
 
 
 def gallery_html(node_url, thumbnail_url):
     """Return the HTML of the tiles of the nodes of each category, linking node_url(node)."""
     lines = []
     for category, nodes in CATEGORIES:
-        lines += ['<h3>%s</h3>' % category, '<p>%s</p>' % CATEGORY_DESCRIPTIONS[category],
-                  '<div class="opencv-apps-gallery">']
-        for node in nodes:
-            lines.append('<a class="opencv-apps-tile" href="%s"><img src="%s" alt="%s" loading="lazy">'
-                         '<span>%s</span></a>' % (node_url(node), thumbnail_url(node), node, node))
-        lines.append('</div>')
+        description, output = CATEGORY_DESCRIPTIONS[category]
+        lines += ['<h3>%s</h3>' % category, '<p>%s<br>Output: %s.</p>' % (description, rst_to_html(output))]
+        for figure in CATEGORY_FIGURES.get(category, []):
+            lines.append('<p><img src="%s" alt="%s" style="width: 100%%; max-width: 900px"></p>' % figure)
+        for distributions, tier_nodes in tiers(nodes):
+            lines += ['<p class="opencv-apps-tier">%s</p>' % tier_label(distributions),
+                      '<div class="opencv-apps-gallery">']
+            for node in tier_nodes:
+                lines.append('<a class="opencv-apps-tile" href="%s"><img src="%s" alt="%s" loading="lazy">'
+                             '<span>%s<br><small>%s</small></span></a>' % (
+                                 node_url(node), thumbnail_url(node), node, node, NODE_OUTPUTS.get(node, '~/image')))
+            lines.append('</div>')
     return '\n'.join(lines)
 
 
 # the styles of the tiles, in the page, as rosdoc2 builds a copy of doc/ in another directory
 GALLERY_CSS = """/* the tiles of the nodes on the top page (doc/tools/generate_pages.py) */
+.opencv-apps-tier {
+  margin: 0 0 6px;
+  font-size: 90%;
+  font-weight: bold;
+  color: #6a6a6a;
+}
 .opencv-apps-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -517,15 +821,24 @@ def readme_gallery():
     """Return the gallery of README.md, in a table of each category, as GitHub does not show the styles."""
     lines = []
     for category, nodes in CATEGORIES:
-        lines += ['### %s' % category, '', CATEGORY_DESCRIPTIONS[category], '', '<table>']
-        for i in range(0, len(nodes), 4):
-            lines.append('<tr>')
-            for node in nodes[i:i + 4]:
-                lines.append('<td align="center" width="25%%"><a href="%snodes/%s.html"><img src="%s%s_thumb.gif" '
-                             'width="200" alt="%s"><br><code>%s</code></a></td>' % (
-                                 DOCUMENTATION_URL, node, MEDIA_URL, node, node, node))
-            lines.append('</tr>')
-        lines += ['</table>', '']
+        description, output = CATEGORY_DESCRIPTIONS[category]
+        # the inline literals of reStructuredText (``...``) in Markdown (`...`)
+        lines += ['### %s' % category, '', ('%s Output: %s.' % (description, output)).replace('``', '`'), '']
+        for figure in CATEGORY_FIGURES.get(category, []):
+            lines += ['<img src="%s" alt="%s" width="900">' % figure, '']
+        for distributions, tier_nodes in tiers(nodes):
+            lines += ['**%s**' % tier_label(distributions), '', '<table>']
+            for i in range(0, len(tier_nodes), 4):
+                lines.append('<tr>')
+                # the image and the name in their own links: GitHub hides a GIF in a link with other contents
+                # (it replaces the GIFs with its player of animated images, but not those)
+                for node in tier_nodes[i:i + 4]:
+                    url = '%snodes/%s.html' % (DOCUMENTATION_URL, node)
+                    lines.append('<td align="center" width="25%%"><a href="%s"><img src="%s%s_thumb.gif" width="200" '
+                                 'alt="%s"></a><br><a href="%s"><code>%s</code></a><br><sub>%s</sub></td>'
+                                 % (url, MEDIA_URL, node, node, url, node, NODE_OUTPUTS.get(node, '~/image')))
+                lines.append('</tr>')
+            lines += ['</table>', '']
     return '\n'.join(lines)
 
 
