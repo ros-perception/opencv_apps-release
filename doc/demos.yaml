@@ -6,6 +6,8 @@
 #   launch_args: the arguments of the launch file (launch_file, or the node)
 #   prepare: the commands before publishing the clip, steps: the commands after running the node
 #   view: the image topic of the node to view, instead of image
+#   downloads, publisher, view_command: the files to download, the command to publish them and to view the result,
+#     instead of the clip, image_publisher and rqt_image_view
 adding_images:
   clip: tos_bridge.mp4
   image: image1:=image image2:=image2
@@ -42,14 +44,15 @@ blob_detection:
   - ros2 launch opencv_apps hsv_color_filter.launch.xml h_limit_min:=40 h_limit_max:=70 s_limit_min:=150 s_limit_max:=255
     v_limit_min:=120 v_limit_max:=255 &
 camshift:
-  clip: sign.mp4
+  clip: tos_canal.mp4
   launch_args:
-    height: 170
+    height: 220
     node_name: camshift_roi
-    width: 140
-    x: 410
-    y: 90
-  note: The ROI is the face, and the ellipse also takes the red shirt of the same hue; back_project and image are shown.
+    width: 160
+    x: 300
+    y: 160
+  note: The ROI is the man, as the other tracking nodes; camshift tracks the hue histogram of the ROI, and the ellipse
+    also takes the areas of the same hue; back_project and image are shown.
 compare_histogram:
   clip: street.mp4
   launch_args:
@@ -75,8 +78,153 @@ corner_harris:
   note: The threshold is lowered from 200 to show more corners.
 discrete_fourier_transform:
   clip: street.mp4
+detection_3d:
+  clip: test/rgbd_walking.mp4
+  downloads:
+  - test/publish_rgbd.py
+  - test/rgbd_walking.mp4
+  - test/rgbd_walking_depth.npz
+  publisher: python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz
+  image: input:=/dnn_object_detection/detections depth:=/depth camera_info:=/camera_info
+  launch_args: {}
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image &
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
+  launch_command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image depth:=/depth detection_3d:=true
+    rviz:=true rviz_points:=/points
+  launch_command_title: run the detector, detection_3d and rviz2 in one launch file
+  pipeline_title: What runs in the launch file
+  pipeline_note: '``detection_3d:=true`` of dnn_object_detection.launch.xml (and of dnn_pose_estimation.launch.xml)
+    includes launch/detection_3d_pipeline.launch.xml, which runs the pipeline of the figure above: the detector
+    publishes the 2D results (``/dnn_object_detection/detections``), detection_3d (``dnn_object_detection_3d``)
+    synchronizes them with ``depth`` and ``camera_info`` (``camera_info`` next to ``image`` by default) and publishes
+    the 3D boxes, the markers and the TF frames, and rviz2 (``rviz:=true``) shows them with the image of the detector
+    and the depth image; without ``depth``, dnn_depth_estimation (``dnn_object_detection_depth_estimation``, Depth
+    Anything V2 Metric) estimates the depth from the color image. The same pipeline by the nodes, each in its own
+    terminal, e.g. to change the parameters of each node or to use another detector (any node of the 2D results, with
+    ``input_type``):'
+  pipeline:
+  - title: the detector, the 2D results on /dnn_object_detection/detections
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image
+  - title: detection_3d, the 2D results and the depth to the 3D boxes and the TF frames
+    command: ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=/depth
+      camera_info:=/camera_info
+  - title: rviz2
+    command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
+  figure:
+    path: images/detection_3d_pipeline.svg
+    caption: 'The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input),
+      the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.'
+  note: 'The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm,
+    camera_info and the colored points, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and
+    the objects of dnn_object_detection. rviz/detection_3d.rviz shows the points, ~/markers (the 3D boxes, the labels
+    with the distances and the axes of the TF frames of the objects), the image of dnn_object_detection and the depth
+    image; for your camera, give its frame by ``fixed_frame``, e.g. ``fixed_frame:=camera_link`` (or by -f of rviz2 run
+    by itself, with the topics of the images by remapping, e.g. --ros-args -r
+    /depth:=/camera/camera/aligned_depth_to_color/image_raw). rviz/detection_3d_ros1.rviz is the same
+    for ROS 1. Give the full names of the topics: ``depth:=depth`` is ``depth`` of the namespace of the node, and a
+    camera may publish ``depth/image``, ``depth/image_raw`` or ``depth_registered/image_raw``. The node warns of an
+    input of no publisher, with the published topics of its type, and of the inputs not received or not synchronized
+    for 5 s.'
+  variants_title: Inputs and sources of the distances
+  variants_note: The 2D results of the other nodes and the distances of an RGB-D camera, a monocular depth estimation
+    or a LiDAR, shown in rviz with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects
+    farther away). The commands below are in their own terminals, as above; the launch file of the detector with
+    ``detection_3d:=true`` runs the pipeline (see above), and the nodes run each for the LiDAR.
+  variants:
+  - name: rgbd
+    title: Objects and an RGB-D camera (default)
+    default: true
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image depth:=/depth detection_3d:=true
+      rviz:=true rviz_points:=/points
+    note: The depth image of the TUM RGB-D dataset, as above.
+  - name: skeletons
+    title: Human and hand skeletons
+    image: input:=/dnn_pose_estimation/skeletons depth:=/depth camera_info:=/camera_info
+    launch_args:
+      input_type: skeletons
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
+    command: ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/image depth:=/depth detection_3d:=true
+      rviz:=true rviz_points:=/points
+    note: '``~/skeletons`` of dnn_pose_estimation (``person``) or dnn_hand_pose_estimation (``left_hand`` and
+      ``right_hand``): the box and the TF frame of each skeleton as an object, the TF frame ``<label>_<id>_<keypoint>``
+      of each keypoint (e.g. ``person_0_left_wrist``) at the median depth within ``keypoint_radius`` of the keypoint,
+      and the joints and the bones in ``~/markers``; the keypoints less visible than ``keypoint_visibility`` are left
+      out. Needs OpenCV 4.9 or later, as the pose nodes.'
+  - name: mono
+    title: Monocular depth estimation
+    image: input:=/dnn_object_detection/detections depth:=/dnn_depth_estimation/depth camera_info:=/camera_info
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz --ros-args -r depth:=unused_depth -r points:=unused_points &
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image detection_3d:=true rviz:=true
+      use_cuda:=true
+    note: 'Only the color image of a camera: without ``depth``, the launch file runs dnn_depth_estimation with Depth
+      Anything V2 Metric (indoors, see dnn_depth_estimation), whose ``~/depth`` (32FC1 in m) detection_3d uses instead
+      of the depth of the RGB-D camera (not used, remapped to unused_depth); ``use_cuda:=true`` runs the detector and
+      the depth estimation in the docker image of OpenCV with CUDA (see :doc:`../gpu`). The points of the estimated
+      depth for rviz are by depth_image_proc, e.g. ``ros2 run depth_image_proc point_cloud_xyzrgb_node --ros-args -r
+      rgb/image_rect_color:=/image -r rgb/camera_info:=/camera_info -r
+      depth_registered/image_rect:=/dnn_object_detection_depth_estimation/depth`` with ``rviz_points:=/points``. The distances are less accurate than those of an
+      RGB-D camera (the relative error is about 0.15 on CUDA in this sequence), and the model needs OpenCV 4.10 or
+      later, and a GPU to run it in real time.'
+  - name: lidar
+    title: LiDAR
+    image: input:=/dnn_object_detection/detections points:=points camera_info:=camera_info
+    launch_args:
+      depth_source: points
+      max_depth: 60.0
+      depth_threshold: 1.0
+      track_distance: 2.0
+    commands:
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/publish_lidar.py
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas.mp4
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
+    - python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
+    - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_lidar.rviz &
+    note: 20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the
+      frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than
+      indoors, so max_depth, depth_threshold and track_distance are larger.
 dnn_depth_estimation:
   clip: keybridge.mp4
+  variants_title: Models
+  variants_note: The node runs MiDaS v2.1 small by default, whose output is the relative inverse depth
+    (``~/inverse_depth``), or a model of the depth in meters (``metric_depth:=true``, ``~/depth``), e.g. Depth Anything
+    V2 Metric, for detection_3d with a monocular camera. Depth Anything V2 Metric Small is converted to onnx readable by
+    OpenCV 4.10 and later (by tools/export_depth_anything_metric.py) in
+    `k-okada/depth-anything-v2-metric-small-onnx <https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx>`_
+    (Apache-2.0).
+  variants:
+  - name: midas
+    title: MiDaS v2.1 small (default)
+    default: true
+    note: 'MiDaS v2.1 small (256x256): fast on a CPU, and read by OpenCV 4 and 5; the relative inverse depth,
+      larger nearer, without the scale in meters.'
+  - name: hypersim
+    title: Depth Anything V2 Metric Small, indoors (Hypersim)
+    launch_args:
+      model: https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx
+      input_width: 518
+      input_height: 518
+      metric_depth: true
+    note: 'Depth Anything V2 Metric Small trained on Hypersim (518x518, 99 MB): the depth in meters indoors, up to
+      about 20 m, e.g. for detection_3d in a room; needs OpenCV 4.10 or later, and a GPU to run it in real time. The
+      demo is the RGB-D sequence of TUM (its color images only).'
+  - name: vkitti
+    title: Depth Anything V2 Metric Small, outdoors (Virtual KITTI)
+    launch_args:
+      model: https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_vkitti_vits_518.onnx
+      input_width: 518
+      input_height: 518
+      metric_depth: true
+    note: 'Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up
+      to about 80 m, e.g. on the road; needs OpenCV 4.12 or later.'
+dnn_edge_detection:
+  clip: street.mp4
+  note: DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.12 or later.
 dnn_face_detection:
   clip: tos_faces.mp4
 dnn_face_recognition:
@@ -92,14 +240,154 @@ dnn_hand_pose_estimation:
   clip: sign.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
 dnn_image_classification:
-  clip: pool.mp4
+  clip: tos_bridge.mp4
+  variants_title: Models
+  variants_note: The node runs the classification models of ImageNet with the same input (224x224, RGB normalized by
+    the mean and the standard deviation of ImageNet) and output (the logits of the 1000 classes), given by ``model``.
+    ImageNet has no class of the people, so the classes of this clip are the things around them.
+  variants:
+  - name: ppresnet50
+    title: PP-ResNet50 (default)
+    default: true
+    note: 'The most accurate (top-1 82.3 % on ImageNet, 98 MB): use it unless the computer is slow, e.g. with a GPU
+      or a desktop CPU.'
+  - name: mobilenetv1
+    title: MobileNetV1
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv1_2022apr.onnx
+    note: 'MobileNetV1 of opencv_zoo (top-1 67.6 %, 16 MB, OpenCV 4.9 or later): much faster and smaller than
+      PP-ResNet50, for a small computer without a GPU, e.g. a Raspberry Pi; MobileNetV2 is a little more accurate.'
+  - name: mobilenetv2
+    title: MobileNetV2
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
+    note: 'MobileNetV2 of opencv_zoo (top-1 69.4 %, 14 MB, OpenCV 4.9 or later): the more accurate of the two
+      MobileNets at about the same speed, the first choice for a small computer.'
+dnn_interactive_segmentation:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  note: The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next
+    images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.12 or later.
+  steps:
+  - ros2 run opencv_apps set_image.py 375 325 150 310 --ros-args -r set_roi:=/dnn_interactive_segmentation/set_roi
+dnn_inpainting:
+  clip: tos_bridge.mp4
+  launch_args:
+    mask: /dnn_semantic_segmentation/label
+  note: 'The people found by dnn_semantic_segmentation (its ``~/label``, non-zero for the people) are filled by LaMa
+    (Apache-2.0) of opencv_zoo, which needs OpenCV 5.0 or later and takes about 0.8 s for each image on a CPU
+    (OpenCV 5.1). A rectangle is filled with ``ros2 run opencv_apps set_image.py <center x> <center y> <width>
+    <height> --ros-args -r set_roi:=/dnn_inpainting/set_roi`` instead, and cleared with the width and height of 0.'
+  steps:
+  - ros2 launch opencv_apps dnn_semantic_segmentation.launch.xml image:=image debug_view:=false &
 dnn_object_detection:
-  clip: tos_indoor.mp4
+  clip: tum_walking.mp4
+  variants_title: Models
+  variants_note: The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo,
+    NanoDet-Plus (``model_type:=nanodet``, onnx), the models of the output of YOLOv8, YOLOv9 and YOLO11
+    (``model_type:=yolov8``, onnx, OpenCV 4.9 or later), or a model of ``cv::dnn::DetectionModel``
+    (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with ``config``, ``classes``, ``input_width``,
+    ``input_height``, ``scale`` and ``swap_rb``. All the models below are trained on the 80 classes of COCO.
+  variants:
+  - name: yolox
+    title: YOLOX-S (default)
+    default: true
+    note: 'YOLOX-S of opencv_zoo (AP 40.5 on COCO, 36 MB, onnx): the first choice, accurate and fast enough on a
+      GPU or a desktop CPU, and read by OpenCV 4 and 5.'
+  - name: yoloxint8
+    title: YOLOX-S int8
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
+    note: 'YOLOX-S quantized to int8 of opencv_zoo (AP 32.6, 9 MB, onnx): a little less accurate, smaller and faster
+      on a CPU without a GPU, e.g. a small computer of a robot; with CUDA, use YOLOX-S, as int8 runs on the CPU.'
+  - name: yoloxtiny
+    title: YOLOX-Tiny
+    launch_args:
+      model: https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx
+      input_width: 416
+      input_height: 416
+    note: 'YOLOX-Tiny of Megvii (AP 32.8 on COCO, 20 MB, onnx, Apache-2.0): smaller and faster than YOLOX-S, with the
+      input 416x416, for a CPU of a robot; read by OpenCV 4 and 5.'
+  - name: yoloxnano
+    title: YOLOX-Nano
+    launch_args:
+      model: https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx
+      input_width: 416
+      input_height: 416
+    note: 'YOLOX-Nano of Megvii (AP 25.8, 3.7 MB, onnx, Apache-2.0): the smallest YOLOX, for a small computer, e.g. a
+      Raspberry Pi; misses small or blurred objects more than the others. Read by OpenCV 4 and 5.'
+  - name: nanodet
+    title: NanoDet-Plus
+    launch_args:
+      model_type: nanodet
+      input_width: 416
+      input_height: 416
+    note: 'NanoDet-Plus-m-1.5x of opencv_zoo (AP 34.1, 3.8 MB, onnx, Apache-2.0): as accurate as YOLOX-Tiny in a fifth
+      of its size, the first choice for a CPU without a GPU; read by OpenCV 4 (also 4.6 of Ubuntu 24.04) and 5.'
+  - name: yolov8n
+    title: YOLOv8n (AGPL-3.0)
+    launch_args:
+      model_type: yolov8
+      model: https://github.com/CVHub520/X-AnyLabeling/releases/download/v0.1.0/yolov8n.onnx
+    note: 'YOLOv8n of Ultralytics (AP 37.3, 13 MB, onnx, the URL of samples/dnn/models.yml of OpenCV): the most accurate
+      of the small models; the models of Ultralytics are under AGPL-3.0, which applies to your system using them, so it
+      is not the default. model_type yolov8 also reads YOLOv9 and YOLO11 exported to onnx (opset 12). OpenCV 4.9 or
+      later.'
+  - name: yolov4tiny
+    title: YOLOv4-tiny (darknet)
+    launch_args:
+      model_type: detection_model
+      model: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights
+      config: https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/cfg/yolov4-tiny.cfg
+      classes: https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/data/coco.names
+      input_width: 416
+      input_height: 416
+    note: 'YOLOv4-tiny of darknet (AP 21.7 on COCO, 23 MB): the fastest and least accurate, and an example of
+      darknet models, e.g. your own model trained with darknet; OpenCV 4 only, as OpenCV 5 reads only onnx.'
+dnn_optical_flow:
+  clip: keybridge.mp4
+  note: Needs OpenCV 4.10 or later. RAFT takes about 1 s per image on a CPU (OpenCV 4.x runs it on the CPU), so the
+    flows are of the images about 1 s apart, which the node processes, not of the consecutive images of the 10 Hz
+    video. The model of opencv_zoo is under the BSD-3-Clause license (RAFT) and the MIT License (its conversion to
+    onnx).
+dnn_person_reid:
+  clip: tum_walking.mp4
+  image: image:=image input:=/dnn_object_detection/detections
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image debug_view:=false &
+  note: 'The people of dnn_object_detection keep their ids while they walk around: each box is in the color of the
+    id, with person_<id> and the cosine similarity to the person seen before, or new. The YouTu ReID baseline of
+    opencv_zoo (Apache 2.0, 106 MB, onnx) is read by OpenCV 4 (also 4.6 of Ubuntu 24.04) and 5.'
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
 dnn_semantic_segmentation:
   clip: tos_bridge.mp4
+dnn_super_resolution:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  variants_title: Models
+  variants_note: The node runs the onnx models of `dnn_superres <https://github.com/opencv/opencv_contrib/tree/5.x/modules/dnn_superres>`_
+    of opencv_contrib (in opencv_extra, OpenCV 4.10 or later), given by ``model``, whose scale is the scale of
+    ``~/image``; the model enlarges the Y channel of YCrCb, and the colors (Cr and Cb) are enlarged by the bicubic
+    interpolation. The models are converted from the TensorFlow models of
+    `TF-ESPCN <https://github.com/fannymonori/TF-ESPCN>`_ and
+    `FSRCNN_Tensorflow <https://github.com/Saafke/FSRCNN_Tensorflow>`_, both Apache-2.0 (opencv_extra, which has
+    the onnx files, has no license file of its own). The input of this demo is 640x480.
+  variants:
+  - name: espcn_x2
+    title: ESPCN x2 (default)
+    default: true
+    note: 'ESPCN x2 (86 KB): 2 times as large, e.g. 640x480 to 1280x960, the fastest.'
+  - name: fsrcnn_x2
+    title: FSRCNN x2
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x2.onnx
+    note: 'FSRCNN x2 (38 KB): 2 times as large, about as accurate as ESPCN x2 (the benchmark of dnn_superres) and
+      slower.'
+  - name: fsrcnn_x3
+    title: FSRCNN x3
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x3.onnx
+    note: 'FSRCNN x3 (39 KB): 3 times as large, e.g. 640x480 to 1920x1440.'
 dnn_text_detection:
   clip: test/text.mp4
 dnn_tracking:
@@ -231,8 +519,9 @@ morphology:
     morph_operator: 0
     morph_size: 10
 people_detect:
-  clip: tos_bridge.mp4
-  note: HOG needs full-body people of about 64x128 pixels, which this clip does not have, so most boxes are false.
+  clip: test/face_detector_withface_test_diamondback.mp4
+  launch_args: {}
+  note: HOG finds the people whose whole body is in the image, of about 64x128 pixels or larger.
 phase_corr:
   clip: keybridge.mp4
   launch_args:
@@ -297,3 +586,95 @@ watershed_segmentation:
     {x: 200.0, y: 100.0}, {x: 300.0, y: 100.0}, {x: 400.0, y: 100.0}, {x: 500.0, y: 100.0}, {x: 100.0, y: 200.0}, {x: 200.0,
     y: 200.0}, {x: 300.0, y: 200.0}, {x: 400.0, y: 200.0}, {x: 500.0, y: 200.0}, {x: 100.0, y: 300.0}, {x: 200.0, y: 300.0},
     {x: 300.0, y: 300.0}, {x: 400.0, y: 300.0}, {x: 500.0, y: 300.0}]}" &'
+laser_odometry:
+  clip: test/publish_livox_sim.py
+  downloads:
+  - test/publish_livox_sim.py
+  publisher: python3 publish_livox_sim.py
+  image: points:=points voxel_size:=0.2 max_range:=20.0
+  launch_args: {}
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry.rviz
+  note: 'The input is the simulated scans of the non-repetitive scanning of Livox Mid-360 moving in a room, by
+    test/publish_livox_sim.py (its points are in the frame lidar; the demo above is of the real data below).
+    rviz/laser_odometry.rviz shows the 3D map (~/map), the points, the trajectory (~/path) and the pose (~/odom); for
+    your LiDAR, give its topic and the frame of the robot, e.g. points:=/livox/lidar base_frame:=base_link (with the
+    TF of the LiDAR on it), and voxel_size:=0.1 - 0.2 indoors.'
+  variants_title: 3D and 2D maps
+  variants_note: The odometry of a LiDAR gives the 3D trajectory and the 3D map (~/map) by itself, and the 2D map with
+    slam_toolbox (launch/laser_odometry_slam.launch.xml), e.g. for Nav2. The commands below are in their own terminals.
+  variants:
+  - name: g1
+    title: 3D map of Livox Mid-360 on Unitree G1 (default)
+    default: true
+    image: points:=points base_frame:=base_link voxel_size:=0.2 max_range:=30.0
+    commands:
+    - pip install laspy lazrs
+    - wget https://zenodo.org/records/21318128/files/flat-room.7z && 7z x flat-room.7z
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/tools/publish_hdmapping.py
+    - python3 publish_hdmapping.py flat-room/trial-1/hdmapping-raw &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry.rviz &
+    note: 'The Livox Mid-360 on the head of a Unitree G1 walking 87.6 m in a room (flat-room of HUMANOID-LIO-DATASET,
+      CC BY 4.0), by tools/publish_hdmapping.py, which also publishes the TF of base_link by the gravity at the start
+      (the Mid-360 of G1 is upside down). The ATE to its ground truth (by a terrestrial laser scanner) is 3.6 cm, as
+      KISS-ICP (3.7 cm).'
+  - name: slam
+    title: 2D map with slam_toolbox of Livox Mid-360 on Unitree G1
+    launch_file: laser_odometry_slam
+    image: points:=points
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-pointcloud-to-laserscan ros-$ROS_DISTRO-slam-toolbox
+    - python3 publish_hdmapping.py flat-room/trial-1/hdmapping-raw &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry_slam.rviz &
+    note: 'launch/laser_odometry_slam.launch.xml: laser_odometry (odom -> base_link), the points on the floor plane of
+      base_link as a 2D scan (pointcloud_to_laserscan) and slam_toolbox (map -> odom, /map), of the same data.'
+  - name: nav2
+    title: 2D map and Nav2 with a 2D LiDAR in the simulation
+    command: ros2 launch opencv_apps odometry_tb3_simulation.launch.py odometry:=laser
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-nav2-bringup ros-$ROS_DISTRO-nav2-minimal-tb3-sim ros-$ROS_DISTRO-slam-toolbox
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/odometry_tb3_simulation.rviz &
+    note: 'launch/odometry_tb3_simulation.launch.py: TurtleBot3 Waffle in Gazebo of Nav2 without the odometry of its
+      wheels; laser_odometry of its 2D LiDAR (input_type scan) gives odom -> base_footprint and /odom for
+      slam_toolbox and Nav2, which navigates to the goals of Nav2 Goal of rviz (the trajectory of laser_odometry in
+      yellow, of rgbd_odometry in cyan).'
+rgbd_odometry:
+  clip: test/rgbd_xyz.mp4
+  downloads:
+  - test/publish_rgbd.py
+  - test/rgbd_xyz.mp4
+  - test/rgbd_xyz_depth.npz
+  publisher: python3 publish_rgbd.py rgbd_xyz.mp4 rgbd_xyz_depth.npz
+  image: image:=image depth:=depth camera_info:=camera_info base_frame:=camera_link
+  launch_args: {}
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/rgbd_odometry.rviz
+  note: 'The input is 30 RGB-D images of the TUM RGB-D freiburg1_xyz sequence (image, depth in mm and camera_info,
+    by test/publish_rgbd.py, with the static TF of the camera on camera_link), in a loop (the odometry restarts when
+    the time goes back); the demo above is of the whole sequence below. rviz/rgbd_odometry.rviz shows the colored 3D
+    map (~/map), the trajectory (~/path), the pose (~/odom) and the image; for your camera, give its frame on the
+    robot, e.g. base_frame:=base_link.'
+  variants_title: 3D and 2D maps
+  variants_note: The visual odometry of an RGB-D camera gives the 3D trajectory and the colored 3D map (~/map), and the
+    odometry for slam_toolbox and Nav2. The commands below are in their own terminals.
+  variants:
+  - name: tum
+    title: 3D map of TUM RGB-D (default)
+    default: true
+    image: image:=image depth:=depth camera_info:=camera_info base_frame:=base_link map_voxel_size:=0.01
+    commands:
+    - wget https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.tgz && tar xf rgbd_dataset_freiburg1_xyz.tgz
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/tools/publish_tum_rgbd.py
+    - python3 publish_tum_rgbd.py rgbd_dataset_freiburg1_xyz &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/rgbd_odometry.rviz &
+    note: 'The handheld camera of freiburg1_xyz (CC BY 4.0), by tools/publish_tum_rgbd.py; the ATE to its ground truth
+      is 4.9 cm in 8 m (rgbd_icp). The odometry of a camera drifts more than of a LiDAR, e.g. 3.5 m in 41 m of
+      freiburg2_pioneer_slam of a robot in a large hall (icp).'
+  - name: simulation
+    title: 3D map and Nav2 with a depth camera in the simulation
+    command: ros2 launch opencv_apps odometry_tb3_simulation.launch.py odometry:=camera
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-nav2-bringup ros-$ROS_DISTRO-nav2-minimal-tb3-sim ros-$ROS_DISTRO-slam-toolbox
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/odometry_tb3_simulation_3d.rviz &
+    note: 'launch/odometry_tb3_simulation.launch.py: the depth camera of TurtleBot3 Waffle in Gazebo (no image,
+      use_image:=false and method:=icp) gives the 3D map, and with odometry:=camera, odom -> base_footprint for
+      slam_toolbox and Nav2 (the 2D map of the 2D LiDAR corrects the drift of the odometry, 0.6 m in a few meters in
+      the world of few features).'

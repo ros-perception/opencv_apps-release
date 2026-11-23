@@ -3,8 +3,10 @@ Nodes
 
 Each node subscribes ``image`` (``sensor_msgs/msg/Image``), and publishes its results in the namespace of the node, e.g. ``edge_detection/image``. Remap ``image`` to the topic of the camera.
 
-Image processing
-----------------
+Image filters
+-------------
+
+Filter and transform the images: edges (also by DexiNed), histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN. Output: the processed image in ``~/image``.
 
 .. toctree::
    :maxdepth: 1
@@ -12,14 +14,38 @@ Image processing
    nodes/adding_images
    nodes/discrete_fourier_transform
    nodes/edge_detection
+   nodes/dnn_edge_detection
    nodes/equalize_histogram
    nodes/morphology
    nodes/pyramids
    nodes/smoothing
    nodes/threshold
+   nodes/dnn_super_resolution
+   nodes/dnn_inpainting
 
-Color
------
+Features and shapes
+-------------------
+
+Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls. Output: ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/corner_harris
+   nodes/goodfeature_track
+   nodes/hough_lines
+   nodes/line_segment_detector
+   nodes/hough_circles
+   nodes/blob_detection
+   nodes/find_contours
+   nodes/general_contours
+   nodes/contour_moments
+   nodes/convex_hull
+
+Segmentation
+------------
+
+Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.
 
 .. toctree::
    :maxdepth: 1
@@ -28,37 +54,98 @@ Color
    nodes/hls_color_filter
    nodes/lab_color_filter
    nodes/rgb_color_filter
-   nodes/compare_histogram
-
-Features, lines and contours
-----------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/corner_harris
-   nodes/goodfeature_track
-   nodes/hough_lines
-   nodes/hough_circles
-   nodes/line_segment_detector
-   nodes/find_contours
-   nodes/general_contours
-   nodes/contour_moments
-   nodes/convex_hull
-   nodes/blob_detection
-
-Segmentation
-------------
-
-.. toctree::
-   :maxdepth: 1
-
+   nodes/background_subtraction
    nodes/segment_objects
    nodes/watershed_segmentation
-   nodes/background_subtraction
+   nodes/dnn_semantic_segmentation
+   nodes/dnn_interactive_segmentation
 
-Motion and tracking
--------------------
+Image classification
+--------------------
+
+Find what the whole image shows, the classes of ImageNet. Output: ``~/detections`` (DetectionArrayStamped), the classes with their scores.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_image_classification
+
+Object detection
+----------------
+
+Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of ``~/detections`` over the images by their appearance (dnn_person_reid, a post-process of the detections). Output: ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for dnn_person_reid.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/people_detect
+   nodes/dnn_object_detection
+   nodes/dnn_person_reid
+
+Codes and markers
+-----------------
+
+Find and decode QR codes, barcodes and ArUco markers. Output: ``~/detections`` (DetectionArrayStamped), with the decoded data and the corners.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/qrcode_detection
+   nodes/barcode_detection
+   nodes/aruco_detection
+
+Text detection and recognition
+------------------------------
+
+Find the texts and read them (OCR). Output: ``~/detections`` (DetectionArrayStamped), with the recognized text.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_text_detection
+
+Faces
+-----
+
+Detect and recognize the faces and their expressions. Output: ``~/faces`` (FaceArrayStamped).
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/face_detection
+   nodes/face_recognition
+   nodes/dnn_face_detection
+   nodes/dnn_face_recognition
+   nodes/dnn_facial_expression_recognition
+
+Human and hand poses
+--------------------
+
+Estimate the poses of the people and the hands. Output: ``~/skeletons`` (SkeletonArrayStamped).
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_pose_estimation
+   nodes/dnn_hand_pose_estimation
+
+Tracking
+--------
+
+Track a target given by ``set_roi`` or the mouse. Output: ``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/tracking
+   nodes/match_template
+   nodes/dnn_tracking
+   nodes/camshift
+
+Optical flow and motion
+-----------------------
+
+Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr.
 
 .. toctree::
    :maxdepth: 1
@@ -66,38 +153,37 @@ Motion and tracking
    nodes/fback_flow
    nodes/lk_flow
    nodes/simple_flow
+   nodes/dnn_optical_flow
    nodes/phase_corr
-   nodes/camshift
-   nodes/tracking
-   nodes/match_template
 
-Detection and recognition
+Histogram comparison
+--------------------
+
+Compare the color histogram of the image with a reference. Output: ``~/distance`` (Float64).
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/compare_histogram
+
+Depth and 3D localization
 -------------------------
 
-.. toctree::
-   :maxdepth: 1
-
-   nodes/face_detection
-   nodes/face_recognition
-   nodes/people_detect
-   nodes/qrcode_detection
-   nodes/barcode_detection
-   nodes/aruco_detection
-
-Deep learning (cv::dnn)
------------------------
+Estimate the depth of a color image by a DNN, and localize the objects, the faces, the tracked targets and the human and hand skeletons of the nodes above in 3D, with a depth image of an RGB-D camera or of the depth estimation, or a point cloud of a LiDAR, and publish their TF frames. Output: ``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d.
 
 .. toctree::
    :maxdepth: 1
 
-   nodes/dnn_face_detection
-   nodes/dnn_face_recognition
-   nodes/dnn_facial_expression_recognition
-   nodes/dnn_object_detection
-   nodes/dnn_image_classification
-   nodes/dnn_semantic_segmentation
    nodes/dnn_depth_estimation
-   nodes/dnn_text_detection
-   nodes/dnn_pose_estimation
-   nodes/dnn_hand_pose_estimation
-   nodes/dnn_tracking
+   nodes/detection_3d
+
+Odometry and maps
+-----------------
+
+Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and build the 3D map and the 3D trajectory. Output: ``~/odom`` (nav_msgs/Odometry), the TF odom -> base_frame, ``~/path`` (nav_msgs/Path) and ``~/map`` (PointCloud2, the 3D map).
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/rgbd_odometry
+   nodes/laser_odometry
