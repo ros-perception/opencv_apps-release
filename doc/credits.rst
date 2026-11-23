@@ -35,8 +35,37 @@ resized (960x540, 10 fps; Tears of Steel is cropped from 1920x800 to 16:9 at the
      - Charlotte Jackson
      - `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_
      - `Wikimedia Commons <https://commons.wikimedia.org/wiki/File:Crossing_the_Key_Bridge_(Baltimore).webm>`__
+   * - freiburg3_walking_xyz of the TUM RGB-D dataset (``tum_walking.mp4``, 640x480, every third image of the first
+       240)
+     - J. Sturm, N. Engelhard, F. Endres, W. Burgard and D. Cremers, Technical University of Munich
+     - `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_
+     - `TUM RGB-D dataset <https://cvg.cit.tum.de/data/datasets/rgbd-dataset>`__
 
-The demos of face_recognition and dnn_face_recognition use ``test/face_detector_withface_test_diamondback.mp4`` of
-opencv_apps (they need the trained faces), and the demos of qrcode_detection, barcode_detection, aruco_detection and
+The demos of face_recognition, dnn_face_recognition and people_detect use
+``test/face_detector_withface_test_diamondback.mp4`` of opencv_apps (the trained faces, and the whole bodies of the
+people for HOG), and the demos of qrcode_detection, barcode_detection, aruco_detection and
 dnn_text_detection use ``test/codes.mp4`` and ``test/text.mp4`` of opencv_apps, made by ``test/make_codes_video.py``
 and ``test/make_text_video.py``. The tests of the nodes use the videos in ``test/``.
+
+The demo and the tests of detection_3d use ``test/rgbd_walking.mp4`` and ``test/rgbd_walking_depth.npz``, 20 color
+and depth images (every 6th of the first 120 images) of the freiburg3_walking_xyz sequence of the
+`TUM RGB-D dataset <https://cvg.cit.tum.de/data/datasets/rgbd-dataset>`_ (J. Sturm, N. Engelhard, F. Endres, W.
+Burgard and D. Cremers, "A Benchmark for the Evaluation of RGB-D SLAM Systems", IROS 2012), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_; the depths are converted from 5000 per meter to
+millimeters.
+
+The LiDAR demo and test of detection_3d use ``test/lidar_boreas.mp4`` and ``test/lidar_boreas_points.npz``, 20 camera
+images (612x512, 1/4 of the camera) and the LiDAR points in the view of the camera (every third, in float16) of the
+sequence boreas-2021-09-02-11-42 of the `Boreas dataset <https://www.boreas.utias.utoronto.ca/>`_ (K. Burnett et al.,
+"Boreas: A Multi-Season Autonomous Driving Dataset", IJRR 2023), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.
+
+The image at the top of README.md (``opencv_apps_hero.gif`` of the docs-media branch) is made of the demo videos above
+(Tears of Steel, the TUM RGB-D dataset), with the ROS logo of
+`ros-infrastructure/artwork <https://github.com/ros-infrastructure/artwork>`_
+(`CC BY-NC 4.0 <https://creativecommons.org/licenses/by-nc/4.0/>`_, and the
+`trademark policy of ROS <https://www.ros.org/blog/media/>`_) and the OpenCV logo of
+`opencv/opencv <https://github.com/opencv/opencv/tree/4.x/doc>`_. Its
+detection_3d is of the black-jacket scene of Tears of Steel (about 4:37 - 4:49, from the 720p version of
+`download.blender.org <https://download.blender.org/demo/movies/ToS/>`_), with the depths of Depth Anything V2 Metric
+(VKITTI) of dnn_depth_estimation.

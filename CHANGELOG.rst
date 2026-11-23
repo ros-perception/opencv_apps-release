@@ -2,6 +2,29 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.1.0 (2026-11-23)
+------------------
+* Add detection_3d: the 3D boxes and the TF frames of the 2D results of the other nodes, with the distances of an RGB-D camera, a monocular depth estimation or a LiDAR (`#177 <https://github.com/ros-perception/opencv_apps/issues/177>`_)
+* detection_3d: warn about missing or unsynchronized inputs, and ``detection_3d:=true`` of the launch files of the detectors, which run the pipeline with rviz2 (`#194 <https://github.com/ros-perception/opencv_apps/issues/194>`_)
+* Add rgbd_odometry and laser_odometry: the odometry of an RGB-D camera and a LiDAR (Livox), with the 3D and 2D maps, slam_toolbox and Nav2 (`#183 <https://github.com/ros-perception/opencv_apps/issues/183>`_)
+* Add DNN nodes: dnn_super_resolution, dnn_optical_flow (RAFT), dnn_interactive_segmentation (EfficientSAM), dnn_person_reid, dnn_inpainting (LaMa) and dnn_edge_detection (DexiNed) (`#191 <https://github.com/ros-perception/opencv_apps/issues/191>`_)
+* dnn_object_detection: NanoDet-Plus and YOLOv8 (ONNX), and the models of YOLOX-Tiny and YOLOX-Nano (`#182 <https://github.com/ros-perception/opencv_apps/issues/182>`_)
+* dnn nodes: ``use_cuda:=true`` runs the node in a docker image of OpenCV with CUDA (`#187 <https://github.com/ros-perception/opencv_apps/issues/187>`_)
+* Build with OpenCV 5.1, with a CI job of it (`#184 <https://github.com/ros-perception/opencv_apps/issues/184>`_, `#188 <https://github.com/ros-perception/opencv_apps/issues/188>`_)
+* watershed_segmentation: the same color of each region in every image (`#186 <https://github.com/ros-perception/opencv_apps/issues/186>`_)
+* Documentation: an image of opencv_apps at the top of README.md, the GIFs of its gallery on GitHub, the version of ROS One in its badge, and the topics of realsense2_camera in the usage of the 3D nodes (`#189 <https://github.com/ros-perception/opencv_apps/issues/189>`_, `#185 <https://github.com/ros-perception/opencv_apps/issues/185>`_, `#195 <https://github.com/ros-perception/opencv_apps/issues/195>`_)
+* Tests: the rates of detection_3d measured for 10 s, and test_nodes publishing the inputs again when a publish fails (`#190 <https://github.com/ros-perception/opencv_apps/issues/190>`_, `#192 <https://github.com/ros-perception/opencv_apps/issues/192>`_)
+* Contributors: Kei Okada
+
+3.0.1 (2026-11-15)
+------------------
+* Publish the common outputs of the groups of the nodes: ~/detections of people_detect, ~/corners of corner_harris, ~/faces of face_recognition and dnn_face_recognition, ~/contours of general_contours and contour_moments; the former topics are kept (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* Draw the results of dnn_image_classification (a panel with the bars of the scores) and dnn_object_detection (bright boxes and labels sized to the image) to be read on large images (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* Documentation: group the nodes by what they find, by the distributions that they run on, and the demos of the models of the dnn nodes (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* corner_harris: one point of ~/corners for the adjacent maxima of the same value (`#178 <https://github.com/ros-perception/opencv_apps/issues/178>`_)
+* CI: build and run the tests in parallel, about 50 minutes to 20 minutes (`#176 <https://github.com/ros-perception/opencv_apps/issues/176>`_)
+* Contributors: Kei Okada
+
 3.0.0 (2026-11-14)
 ------------------
 * Port to ROS2 (jazzy, kilted, lyrical), keeping ROS1 (noetic, ROS One) with the same source and compat headers (`#153 <https://github.com/ros-perception/opencv_apps/issues/153>`_)
